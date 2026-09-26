@@ -84,3 +84,15 @@ $('#requestList').addEventListener('click', (event) => {
 });
 $('#logWasteBtn').addEventListener('click', () => showToast('Waste log form is ready for your next entry'));
 renderListingCards(); renderRequests(); renderPickups(); renderPartners();
+
+// Give the impact scene a small, tactile tilt on desktop pointer movement.
+const scene = $('#scene3d');
+if (scene && window.matchMedia('(pointer: fine)').matches) {
+  scene.addEventListener('pointermove', (event) => {
+    const box = scene.getBoundingClientRect();
+    const x = (event.clientX - box.left) / box.width - 0.5;
+    const y = (event.clientY - box.top) / box.height - 0.5;
+    scene.style.transform = `rotateX(${y * -5}deg) rotateY(${x * 7}deg)`;
+  });
+  scene.addEventListener('pointerleave', () => { scene.style.transform = ''; });
+}
