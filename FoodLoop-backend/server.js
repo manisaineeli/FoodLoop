@@ -1,38 +1,26 @@
-const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-try {
-  process.loadEnvFile(path.join(__dirname, '.env'));
-} catch (err) {
-  if (err.code !== 'ENOENT') console.error('Could not read .env:', err.message);
-}
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = 'foodloop_secret_key_change_in_production';
 
-// Connection string lives in .env. Local MongoDB is the default.
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/foodloop';
-
-function describeUri(uri) {
-  return uri.replace(/\/\/([^@/]+)@/, '//***@');
-}
+// MongoDB connection — use local MongoDB by default
+// To use Atlas, set: set MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/foodloop
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/foodloop';
 
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB:', describeUri(MONGODB_URI)))
+  .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => {
-    console.error('MongoDB connection error:', err.message);
+    console.error('❌ MongoDB connection error:', err.message);
     console.log('');
-    console.log('The app reads MONGODB_URI from .env in this folder.');
-    console.log('Local MongoDB should already be listening on 127.0.0.1:27017.');
-    console.log('Start the Windows service named MongoDB, then run: npm start');
-    console.log('');
-    console.log('For MongoDB Atlas instead, put your connection string in .env:');
-    console.log('MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/foodloop');
+    console.log('To fix:');
+    console.log('  1. Install MongoDB locally: https://www.mongodb.com/try/download/community');
+    console.log('  2. Run: mongod --dbpath ./data');
+    console.log('  3. This server will use mongodb://localhost:27017/foodloop');
   });
 
 // User Schema
@@ -46,11 +34,11 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// Serve static files
-app.use(express.static(__dirname));
+// Serve static files from the FoodLoop directory
+app.use(express.static('public'));
 
 // ===== Auth Routes =====
 
@@ -138,6 +126,13 @@ app.get('/api/verify', async (req, res) => {
   }
 });
 
+// ===== Legacy Routes (for deployed frontend) =====
+// These match the API_URL in app.js: 'http://localhost:5000/api'
+
 app.listen(PORT, () => {
   console.log(`🚀 FoodLoop server running on http://localhost:${PORT}`);
+  console.log('📍 API endpoints:');
+  console.log('   POST /api/signup');
+  console.log('   POST /api/signin');
+  console.log('   GET  /api/verify');
 });

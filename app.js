@@ -1,3 +1,6 @@
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+
 const state = {
   listings: [
     { emoji: '🍱', name: 'Prepared meal boxes', detail: 'Vegetarian · 450 kcal', quantity: '35 boxes', expiry: 'Today, 8:00 PM', status: 'Available', requests: '2 requests' },
@@ -130,20 +133,30 @@ $$('.role-btn').forEach(btn => {
   });
 });
 
-$('#signinForm').addEventListener('submit', (e) => {
+$('#signinForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
-  const result = auth.signin(form.get('email'), form.get('password'), formRoles.signin);
-  if (result.error) { $('#authError').textContent = result.error; return; }
-  showApp();
+  $('#authError').textContent = '';
+  try {
+    const result = await auth.signin(form.get('email'), form.get('password'), formRoles.signin);
+    if (result.error) { $('#authError').textContent = result.error; return; }
+    showApp();
+  } catch (err) {
+    $('#authError').textContent = 'Cannot reach the server. Start it with npm start.';
+  }
 });
 
-$('#signupForm').addEventListener('submit', (e) => {
+$('#signupForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
-  const result = auth.signup(form.get('name'), form.get('email'), form.get('password'), formRoles.signup);
-  if (result.error) { $('#authError').textContent = result.error; return; }
-  showApp();
+  $('#authError').textContent = '';
+  try {
+    const result = await auth.signup(form.get('name'), form.get('email'), form.get('password'), formRoles.signup);
+    if (result.error) { $('#authError').textContent = result.error; return; }
+    showApp();
+  } catch (err) {
+    $('#authError').textContent = 'Cannot reach the server. Start it with npm start.';
+  }
 });
 
 $('#ngoLogout').addEventListener('click', () => auth.logout());
@@ -159,8 +172,6 @@ $('#ngoGrid').addEventListener('click', (e) => {
   showToast(`Request sent for ${foodName}`);
 });
 
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
 const viewNames = { overview: 'Overview', listings: 'Food listings', requests: 'Requests', pickups: 'Pickups', waste: 'Waste log', partners: 'Partners', reports: 'Reports' };
 
 function showView(view) {
