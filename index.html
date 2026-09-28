@@ -11,7 +11,52 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <!-- Auth Screen -->
+    <div class="auth-screen" id="authScreen">
+      <div class="auth-card">
+        <div class="auth-brand"><span class="brand-mark">✳</span><span>food<span>loop</span></span></div>
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="signin">Sign In</button>
+          <button class="auth-tab" data-tab="signup">Create Account</button>
+        </div>
+
+        <!-- Sign In Form -->
+        <form id="signinForm" class="auth-form">
+          <p class="auth-subtitle">Welcome back. Sign in to your account.</p>
+          <label>Email<input type="email" name="email" required placeholder="you@example.com" /></label>
+          <label>Password<input type="password" name="password" required placeholder="••••••••" /></label>
+          <div class="auth-role">
+            <span>I am a</span>
+            <div class="role-toggle">
+              <button type="button" class="role-btn active" data-role="admin">Admin</button>
+              <button type="button" class="role-btn" data-role="ngo">NGO</button>
+            </div>
+          </div>
+          <button type="submit" class="primary-button auth-submit">Sign In <span>→</span></button>
+        </form>
+
+        <!-- Sign Up Form -->
+        <form id="signupForm" class="auth-form hidden">
+          <p class="auth-subtitle">Join FoodLoop and start making an impact.</p>
+          <label>Full name<input type="text" name="name" required placeholder="Your name or organisation" /></label>
+          <label>Email<input type="email" name="email" required placeholder="you@example.com" /></label>
+          <label>Password<input type="password" name="password" required placeholder="Create a password" minlength="6" /></label>
+          <div class="auth-role">
+            <span>I am a</span>
+            <div class="role-toggle">
+              <button type="button" class="role-btn active" data-role="admin">Admin</button>
+              <button type="button" class="role-btn" data-role="ngo">NGO</button>
+            </div>
+          </div>
+          <button type="submit" class="primary-button auth-submit">Create Account <span>→</span></button>
+        </form>
+
+        <p class="auth-error" id="authError"></p>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-shell hidden" id="appShell">
       <aside class="sidebar" id="sidebar">
         <div class="brand"><span class="brand-mark">✳</span><span>food<span>loop</span></span></div>
         <div class="workspace-switcher"><span class="avatar avatar-green">H</span><span><strong>Harbor House</strong><small>Provider workspace</small></span><span class="chevron">⌄</span></div>
@@ -53,6 +98,31 @@
       </main>
     </div>
     <div class="modal-backdrop" id="modalBackdrop"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button class="modal-close" id="modalClose">×</button><p class="eyebrow">NEW ENTRY</p><h2 id="modalTitle">Add a food listing</h2><p class="modal-subtitle">Share a few details and we’ll make it visible to your partners.</p><form id="listingForm"><label>Food name<input name="name" required placeholder="e.g. Prepared meal boxes" /></label><div class="form-row"><label>Quantity<input name="quantity" required placeholder="e.g. 20 boxes" /></label><label>Best before<input name="expiry" required placeholder="e.g. Today, 8:00 PM" /></label></div><label>Notes (optional)<textarea name="notes" rows="3" placeholder="Dietary information, pickup notes..."></textarea></label><div class="modal-actions"><button type="button" class="secondary-button" id="modalCancel">Cancel</button><button type="submit" class="primary-button">Publish listing</button></div></form></div></div>
+    </div><!-- /app-shell -->
+
+    <!-- NGO Dashboard (shown after NGO login) -->
+    <div class="ngo-dashboard hidden" id="ngoDashboard">
+      <header class="ngo-header">
+        <div class="ngo-brand"><span class="brand-mark">✳</span><span>food<span>loop</span></span></div>
+        <div class="ngo-user">
+          <span class="avatar avatar-green" id="ngoAvatar">N</span>
+          <span><strong id="ngoName">NGO Name</strong><small>Community Partner</small></span>
+          <button class="text-button" id="ngoLogout">Log out</button>
+        </div>
+      </header>
+      <main class="ngo-main">
+        <div class="ngo-welcome">
+          <p class="eyebrow">FOOD AVAILABILITY</p>
+          <h1>Food near you</h1>
+          <p class="subtitle">Browse available surplus food from providers in your area.</p>
+        </div>
+        <div class="ngo-search-row">
+          <div class="search-box">⌕<input placeholder="Search available food..." id="ngoSearch" /></div>
+        </div>
+        <div class="ngo-grid" id="ngoGrid"></div>
+      </main>
+    </div>
+
     <div class="toast" id="toast"><span>✓</span><span id="toastMessage">Listing published</span></div>
     <script src="app.js"></script>
   </body>

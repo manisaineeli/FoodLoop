@@ -11,8 +11,153 @@ const state = {
   ],
   partners: [
     ['HF','Hope Foundation','NGO · 8.4 km away','blue'],['CK','Community Kitchen','Community kitchen · 3.1 km away','green'],['LS','Little Steps Shelter','Local shelter · 5.7 km away','purple'],['FA','Food Aid Network','Food bank · 12.2 km away','orange'],['SS','Sunrise Support','NGO · 6.8 km away','rose'],['MH','Meals for Hope','Community kitchen · 2.4 km away','teal']
-  ]
+  ],
+  ngoRequests: []
 };
+
+// ===== Auth System (MongoDB-backed) =====
+const API_URL = 'http://localhost:5000/api';
+
+const auth = {
+  currentUser: JSON.parse(localStorage.getItem('foodloop_session') || 'null'),
+
+  saveSession() { localStorage.setItem('foodloop_session', JSON.stringify(this.currentUser)); },
+  clearSession() { localStorage.removeItem('foodloop_session'); this.currentUser = null; },
+
+  async signup(name, email, password, role) {
+    const res = await fetch(`${API_URL}/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role })
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: data.error || 'Signup failed.' };
+    this.currentUser = data.user;
+    this.saveSession();
+    return { success: true };
+  },
+
+  async signin(email, password, role) {
+    const res = await fetch(`${API_URL}/signin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, role })
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: data.error || 'Signin failed.' };
+    this.currentUser = data.user;
+    this.saveSession();
+    return { success: true };
+  },
+
+  logout() { this.clearSession(); showAuthScreen(); }
+};
+
+function showAuthScreen() {
+  $('#authScreen').classList.remove('hidden');
+  $('#appShell').classList.add('hidden');
+  $('#ngoDashboard').classList.add('hidden');
+}
+
+function showApp() {
+  $('#authScreen').classList.add('hidden');
+  if (auth.currentUser?.role === 'ngo') {
+    $('#appShell').classList.add('hidden');
+    $('#ngoDashboard').classList.remove('hidden');
+    renderNgoDashboard();
+  } else {
+    $('#appShell').classList.remove('hidden');
+    $('#ngoDashboard').classList.add('hidden');
+  }
+}
+
+// ===== NGO Dashboard =====
+function renderNgoDashboard() {
+  const user = auth.currentUser;
+  if (!user) return;
+  $('#ngoName').textContent = user.name;
+  $('#ngoAvatar').textContent = user.name.charAt(0).toUpperCase();
+  renderNgoGrid();
+}
+
+function renderNgoGrid() {
+  const search = ($('#ngoSearch')?.value || '').toLowerCase();
+  const available = state.listings.filter(item => item.status === 'Available' && item.name.toLowerCase().includes(search));
+  const requested = new Set(state.ngoRequests);
+
+  $('#ngoGrid').innerHTML = available.map((item) => {
+    const isRequested = requested.has(item.name);
+    return `<article class="ngo-card">
+      <div class="ngo-card-top"><span class="big-food">${item.emoji}</span><span class="status available">${item.status}</span></div>
+      <h3>${item.name}</h3>
+      <p class="ngo-detail">${item.detail}</p>
+      <div class="ngo-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div>
+      <button class="ngo-request-btn ${isRequested ? 'requested' : ''}" data-food="${item.name}" ${isRequested ? 'disabled' : ''}>
+        ${isRequested ? '✓ Request sent' : 'Request this food'}
+      </button>
+    </article>`;
+  }).join('') || '<div class="ngo-empty">No available food matches your search.</div>';
+}
+
+// ===== Auth Event Handlers =====
+const formRoles = { signin: 'admin', signup: 'admin' };
+
+function syncRoleButtons(formName) {
+  const role = formRoles[formName];
+  $$(`#${formName}Form .role-btn`).forEach(b => {
+    b.classList.toggle('active', b.dataset.role === role);
+  });
+}
+
+$$('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    $$('.auth-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const isSignin = tab.dataset.tab === 'signin';
+    $('#signinForm').classList.toggle('hidden', !isSignin);
+    $('#signupForm').classList.toggle('hidden', isSignin);
+    $('#authError').textContent = '';
+    syncRoleButtons(tab.dataset.tab);
+  });
+});
+
+$$('.role-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const form = btn.closest('.auth-form');
+    const formName = form.id.replace('Form', '');
+    formRoles[formName] = btn.dataset.role;
+    syncRoleButtons(formName);
+  });
+});
+
+$('#signinForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const result = auth.signin(form.get('email'), form.get('password'), formRoles.signin);
+  if (result.error) { $('#authError').textContent = result.error; return; }
+  showApp();
+});
+
+$('#signupForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const result = auth.signup(form.get('name'), form.get('email'), form.get('password'), formRoles.signup);
+  if (result.error) { $('#authError').textContent = result.error; return; }
+  showApp();
+});
+
+$('#ngoLogout').addEventListener('click', () => auth.logout());
+
+$('#ngoSearch').addEventListener('input', renderNgoGrid);
+
+$('#ngoGrid').addEventListener('click', (e) => {
+  const btn = e.target.closest('.ngo-request-btn');
+  if (!btn || btn.disabled) return;
+  const foodName = btn.dataset.food;
+  state.ngoRequests.push(foodName);
+  renderNgoGrid();
+  showToast(`Request sent for ${foodName}`);
+});
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -84,6 +229,9 @@ $('#requestList').addEventListener('click', (event) => {
 });
 $('#logWasteBtn').addEventListener('click', () => showToast('Waste log form is ready for your next entry'));
 renderListingCards(); renderRequests(); renderPickups(); renderPartners();
+
+// Skip auth if already logged in
+if (auth.currentUser) showApp();
 
 // Give the impact scene a small, tactile tilt on desktop pointer movement.
 const scene = $('#scene3d');

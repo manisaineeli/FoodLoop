@@ -7,6 +7,12 @@ FoodLoop is a browser-based prototype for the Food Waste Reduction Platform desc
 - teams coordinate pickups;
 - waste entries and impact reports make the outcome visible.
 
+## Live site
+
+https://manisaineeli.github.io/FoodLoop/
+
+The site is published with GitHub Pages from the `master` branch. Every push to `master` rebuilds and republishes automatically.
+
 ## Run it
 
 Open `index.html` in a browser. No build step or dependency installation is required.
