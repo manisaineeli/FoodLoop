@@ -19,7 +19,29 @@ const state = {
 };
 
 // ===== Auth System (MongoDB-backed) =====
-const API_URL = 'http://localhost:5000/api';
+
+// Where the Express API lives.
+//  - Local dev  : http://localhost:5000/api  (run `npm start`)
+//  - Deployed   : set window.FOODLOOP_API (see config.js) to your hosted backend
+// A hosted backend is REQUIRED for the GitHub Pages build, because GitHub Pages
+// is static-only and cannot run the Node server itself.
+const API_URL = (window.FOODLOOP_API || 'http://localhost:5000/api').replace(/\/$/, '');
+
+// Tell the user *why* auth failed instead of silently doing nothing.
+function backendHint() {
+  if (location.protocol === 'file:') {
+    return 'Open the app through a local web server, not by double-clicking index.html. ' +
+           'Run "python -m http.server 8000" in the project folder and visit http://localhost:8000';
+  }
+  if (!/^https?:$/.test(location.protocol)) {
+    return 'This page is served over ' + location.protocol + ', which blocks API requests.';
+  }
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    return 'This page is hosted at ' + location.hostname + ', so "localhost:5000" is not reachable. ' +
+           'Set window.FOODLOOP_API in config.js to a public backend URL.';
+  }
+  return 'Cannot reach the server. Start it with "npm start" in the project folder.';
+}
 
 const auth = {
   currentUser: JSON.parse(localStorage.getItem('foodloop_session') || 'null'),
@@ -136,26 +158,36 @@ $$('.role-btn').forEach(btn => {
 $('#signinForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
-  $('#authError').textContent = '';
+  const errorEl = $('#authError');
+  errorEl.textContent = '';
+  const submit = e.target.querySelector('button[type="submit"]');
+  submit.disabled = true;
   try {
     const result = await auth.signin(form.get('email'), form.get('password'), formRoles.signin);
-    if (result.error) { $('#authError').textContent = result.error; return; }
+    if (result.error) { errorEl.textContent = result.error; return; }
     showApp();
   } catch (err) {
-    $('#authError').textContent = 'Cannot reach the server. Start it with npm start.';
+    errorEl.textContent = backendHint();
+  } finally {
+    submit.disabled = false;
   }
 });
 
 $('#signupForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
-  $('#authError').textContent = '';
+  const errorEl = $('#authError');
+  errorEl.textContent = '';
+  const submit = e.target.querySelector('button[type="submit"]');
+  submit.disabled = true;
   try {
     const result = await auth.signup(form.get('name'), form.get('email'), form.get('password'), formRoles.signup);
-    if (result.error) { $('#authError').textContent = result.error; return; }
+    if (result.error) { errorEl.textContent = result.error; return; }
     showApp();
   } catch (err) {
-    $('#authError').textContent = 'Cannot reach the server. Start it with npm start.';
+    errorEl.textContent = backendHint();
+  } finally {
+    submit.disabled = false;
   }
 });
 
