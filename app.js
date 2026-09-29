@@ -23,6 +23,7 @@ const db = {
 // Active toolbar filters for the Requests / Pickups views.
 let requestsFilter = 'all';
 let pickupsFilter = 'all';
+let partnersFilter = 'all';
 
 async function api(path, options = {}) {
   const res = await fetch(API_URL + path, {
@@ -82,6 +83,7 @@ function startLivePolling() {
       if (active === 'requestsView') renderRequests();
       if (active === 'pickupsView') renderPickups();
       if (active === 'listingsView') renderListingCards();
+      if (active === 'partnersView') renderPartners();
       renderNavCounts();
     } catch (err) { /* keep last known-good data while the backend is unreachable */ }
   }, 15000);
@@ -438,8 +440,21 @@ function renderPickups() {
   }).join('');
 }
 
+function partnerType(p) {
+  const d = (p.detail || '').toLowerCase();
+  if (d.includes('kitchen')) return 'kitchen';
+  if (d.includes('shelter')) return 'shelter';
+  if (d.includes('food bank')) return 'foodbank';
+  return 'ngo';
+}
+
 function renderPartners() {
-  $('#partnerGrid').innerHTML = db.partners.map((p) => `<article class="partner-card"><span class="partner-avatar ${p.color}">${p.initials}</span><div><strong>${p.name}</strong><small>${p.detail}</small></div><span class="partner-status">${p.status}</span></article>`).join('');
+  const q = ($('#partnerSearch')?.value || '').toLowerCase();
+  const counts = { all: db.partners.length, ngo: 0, kitchen: 0, shelter: 0, foodbank: 0 };
+  db.partners.forEach((p) => { counts[partnerType(p)]++; });
+  [['ptCountAll', counts.all], ['ptCountNgo', counts.ngo], ['ptCountKitchen', counts.kitchen], ['ptCountShelter', counts.shelter], ['ptCountFoodbank', counts.foodbank]].forEach(([id, n]) => { const el = document.getElementById(id); if (el) el.textContent = n; });
+  const list = db.partners.filter((p) => (partnersFilter === 'all' || partnerType(p) === partnersFilter) && (!q || (p.name + ' ' + (p.detail || '')).toLowerCase().includes(q)));
+  $('#partnerGrid').innerHTML = list.map((p) => `<article class="partner-card"><span class="partner-avatar ${p.color}">${p.initials}</span><div><strong>${p.name}</strong><small>${p.detail}</small></div><span class="partner-status">${p.status || 'Connected'}</span></article>`).join('') || '<div class="ngo-empty">No partners match.</div>';
 }
 
 function renderWasteTable() {
@@ -618,17 +633,29 @@ $('#schedulePickupBtn').addEventListener('click', async () => {
 // Export report (secondary button on reports view)
 $('#reportsView .secondary-button')?.addEventListener('click', exportReport);
 
-$('#partnerGrid').parentElement.querySelector('.view-heading .primary-button')?.addEventListener('click', async () => {
+// Partners — invite writes to MongoDB
+$('#invitePartnerBtn').addEventListener('click', async () => {
   const name = prompt('Partner name (e.g. New Shelter):');
   if (!name) return;
+  const type = prompt('Partner type (NGO / Community kitchen / Local shelter / Food bank):') || 'NGO';
   try {
-    await addPartner({ name });
+    await addPartner({ name, detail: type });
     renderPartners();
     showToast('Partner invited');
   } catch (err) {
     showToast('Could not invite: ' + err.message);
   }
 });
+
+// Partners — type tabs + search
+$('#partnerTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.filter-tab');
+  if (!tab) return;
+  partnersFilter = tab.dataset.type;
+  $$('#partnerTabs .filter-tab').forEach((t) => t.classList.toggle('active', t === tab));
+  renderPartners();
+});
+$('#partnerSearch').addEventListener('input', renderPartners);
 
 // Export report — builds a downloadable impact report from live data.
 function exportReport() {
