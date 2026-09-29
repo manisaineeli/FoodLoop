@@ -20,6 +20,10 @@ const db = {
   metrics: null
 };
 
+// Active toolbar filters for the Requests / Pickups views.
+let requestsFilter = 'all';
+let pickupsFilter = 'all';
+
 async function api(path, options = {}) {
   const res = await fetch(API_URL + path, {
     headers: { 'Content-Type': 'application/json' },
@@ -56,6 +60,31 @@ async function loadData() {
   } catch (err) {
     showToast(backendHint());
   }
+}
+
+// Live refresh — pull fresh entries from MongoDB every 15s so new requests and
+// pickups appear without reloading the page.
+let livePollTimer = null;
+function startLivePolling() {
+  if (livePollTimer) return;
+  livePollTimer = window.setInterval(async () => {
+    try {
+      const data = await api('/bootstrap');
+      db.listings = data.listings || [];
+      db.requests = data.requests || [];
+      db.ngoRequests = data.ngoRequests || [];
+      db.pickups = data.pickups || [];
+      db.partners = data.partners || [];
+      db.waste = data.waste || [];
+      db.activities = data.activities || [];
+      db.metrics = data.metrics || null;
+      const active = ($$('.view.active-view')[0] || {}).id;
+      if (active === 'requestsView') renderRequests();
+      if (active === 'pickupsView') renderPickups();
+      if (active === 'listingsView') renderListingCards();
+      renderNavCounts();
+    } catch (err) { /* keep last known-good data while the backend is unreachable */ }
+  }, 15000);
 }
 
 // Render a food photo with a graceful emoji fallback if the image is missing
@@ -200,6 +229,7 @@ async function showApp() {
   }
   renderProfile();
   await loadData();
+  startLivePolling();
 }
 
 // Fill the dashboard with the logged-in user's details
@@ -383,17 +413,29 @@ function renderListingCards() {
 }
 
 function renderRequests() {
-  const pending = db.requests.filter(r => r.status === 'pending');
-  $('#requestList').innerHTML = pending.map((request) => `<article class="request-card"><span class="partner-avatar ${request.color}">${request.initials}</span><div class="request-main"><h3>${request.name}</h3><p>Would like to receive <strong>${request.item}</strong></p><small>${request.time}</small></div><div class="request-actions"><button class="decline" data-id="${request.id}" data-action="decline">Decline</button><button class="accept" data-id="${request.id}" data-action="accept">Accept request</button></div></article>`).join('') || '<div class="ngo-empty">No pending requests.</div>';
+  const q = ($('#requestSearch')?.value || '').toLowerCase();
+  const counts = { all: db.requests.length, pending: 0, accepted: 0, declined: 0 };
+  db.requests.forEach((r) => { if (counts[r.status] !== undefined) counts[r.status]++; });
+  [['reqCountAll', counts.all], ['reqCountPending', counts.pending], ['reqCountAccepted', counts.accepted], ['reqCountDeclined', counts.declined]].forEach(([id, n]) => { const el = document.getElementById(id); if (el) el.textContent = n; });
+  const list = db.requests.filter((r) => (requestsFilter === 'all' || r.status === requestsFilter) && (!q || (r.name + ' ' + r.item).toLowerCase().includes(q)));
+  $('#requestList').innerHTML = list.map((request) => {
+    const actions = request.status === 'pending'
+      ? `<div class="request-actions"><button class="decline" data-id="${request.id}" data-action="decline">Decline</button><button class="accept" data-id="${request.id}" data-action="accept">Accept request</button></div>`
+      : `<span class="status ${request.status === 'accepted' ? 'accepted' : 'declined'}">${request.status === 'accepted' ? 'Accepted' : 'Declined'}</span>`;
+    return `<article class="request-card"><span class="partner-avatar ${request.color || 'blue'}">${request.initials || 'NG'}</span><div class="request-main"><h3>${request.name}</h3><p>Would like to receive <strong>${request.item}</strong></p><small>${request.time || 'Received just now'}</small></div>${actions}</article>`;
+  }).join('') || `<div class="ngo-empty">No ${requestsFilter === 'all' ? '' : requestsFilter + ' '}requests match.</div>`;
 }
 
 function renderPickups() {
-  const groups = [['Today', []], ['Tomorrow', []], ['Completed', []]];
-  db.pickups.forEach(p => {
-    const g = groups.find(([name]) => name === p.day);
-    if (g) g[1].push([p.time, p.item, p.partner]);
-  });
-  $('#pickupBoard').innerHTML = groups.map(([name, cards]) => `<div class="pickup-column"><h3>${name}<span>${cards.length}</span></h3>${cards.map(([time, item, partner]) => `<div class="pickup-card"><strong>${item}</strong><p>${partner}</p><small>◷ ${time}</small></div>`).join('') || '<div class="ngo-empty">Nothing scheduled</div>'}</div>`).join('');
+  const q = ($('#pickupSearch')?.value || '').toLowerCase();
+  const order = pickupsFilter === 'all' ? ['Today', 'Tomorrow', 'Completed'] : [pickupsFilter];
+  const counts = { all: db.pickups.length, Today: 0, Tomorrow: 0, Completed: 0 };
+  db.pickups.forEach((p) => { if (counts[p.day] !== undefined) counts[p.day]++; });
+  [['puCountAll', counts.all], ['puCountToday', counts.Today], ['puCountTomorrow', counts.Tomorrow], ['puCountCompleted', counts.Completed]].forEach(([id, n]) => { const el = document.getElementById(id); if (el) el.textContent = n; });
+  $('#pickupBoard').innerHTML = order.map((day) => {
+    const cards = db.pickups.filter((p) => p.day === day && (!q || (p.item + ' ' + (p.partner || '')).toLowerCase().includes(q)));
+    return `<div class="pickup-column"><h3>${day}<span>${counts[day]}</span></h3>${cards.map((p) => `<div class="pickup-card"><strong>${p.item}</strong><p>${p.partner || '—'}</p><small>◷ ${p.time}</small></div>`).join('') || '<div class="ngo-empty">Nothing scheduled</div>'}</div>`;
+  }).join('');
 }
 
 function renderPartners() {
@@ -519,14 +561,53 @@ $('#logWasteBtn').addEventListener('click', async () => {
   }
 });
 
-// Schedule pickup (secondary button on pickups view)
-$('.view-heading .secondary-button')?.addEventListener('click', async () => {
+// ===================== Requests · Pickups — live toolbars =====================
+
+// Requests — add a request that lands in MongoDB
+$('#addRequestBtn').addEventListener('click', async () => {
+  const name = prompt('Requesting partner (e.g. Hope Foundation):');
+  if (!name) return;
+  const item = prompt('Food item requested (e.g. 18 kg fresh produce):');
+  if (!item) return;
+  try {
+    await requestFood(item, name);
+    renderRequests();
+    renderNavCounts();
+    showToast('Request received');
+  } catch (err) {
+    showToast('Could not add: ' + err.message);
+  }
+});
+
+// Requests — status tabs
+$('#requestTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.filter-tab');
+  if (!tab) return;
+  requestsFilter = tab.dataset.status;
+  $$('#requestTabs .filter-tab').forEach((t) => t.classList.toggle('active', t === tab));
+  renderRequests();
+});
+$('#requestSearch').addEventListener('input', renderRequests);
+
+// Pickups — day tabs
+$('#pickupTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.filter-tab');
+  if (!tab) return;
+  pickupsFilter = tab.dataset.day;
+  $$('#pickupTabs .filter-tab').forEach((t) => t.classList.toggle('active', t === tab));
+  renderPickups();
+});
+$('#pickupSearch').addEventListener('input', renderPickups);
+
+// Schedule pickup — lands in MongoDB under the chosen day column
+$('#schedulePickupBtn').addEventListener('click', async () => {
+  const day = prompt('When is the pickup? (Today / Tomorrow):') || 'Today';
   const item = prompt('Food item (e.g. Fresh produce):');
   if (!item) return;
   const time = prompt('Time (e.g. 3:00 PM):') || 'TBD';
   const partner = prompt('Partner (e.g. Hope Foundation):') || '—';
   try {
-    await addPickup({ item, time, partner, day: 'Today' });
+    await addPickup({ item, time, partner, day: day.trim() });
     renderPickups();
     showToast('Pickup scheduled');
   } catch (err) {
