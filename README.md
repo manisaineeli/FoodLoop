@@ -15,6 +15,29 @@ The site is published with GitHub Pages from the `master` branch. Every push to 
 
 ## Run it
 
-Open `index.html` in a browser. No build step or dependency installation is required.
+**Easiest:** double-click `start.cmd`. It checks MongoDB, starts the API server (minimized), and opens http://localhost:5000 in your browser. Run it again any time — if the server is already up it just opens the page.
 
-The interface is responsive and keeps newly created listings in the current session. The demo data is defined in `app.js`, making it easy to connect the screens to a Node/Express and MongoDB backend later.
+FoodLoop stores all of its data in MongoDB, so the Express server **must be running** before you log in. Signup and signin go through `POST /api/signup` and `POST /api/signin`; if the server is down the browser reports a failed request and the login form shows a hint instead.
+
+Manually:
+
+1. Make sure MongoDB is listening on `127.0.0.1:27017`.
+2. Install dependencies and start the server:
+
+   ```
+   npm install
+   npm start
+   ```
+
+3. Open **http://localhost:5000** in a browser.
+
+The server serves `index.html` itself, so use that URL rather than double-clicking `index.html`. A `file://` page cannot reach the API and will show a `file://` hint on the login form.
+
+Configuration lives in two places:
+
+- `.env` — `PORT` and `MONGODB_URI` for the server (see `.env.example`).
+- `config.js` — `window.FOODLOOP_API`, the API base URL the browser calls. It defaults to `http://localhost:5000/api`.
+
+### Deployed on GitHub Pages
+
+GitHub Pages only serves static files and cannot run `server.js`, so a deployed copy needs a separately hosted backend (Render, Railway, Vercel, Fly.io, or your own server) and `window.FOODLOOP_API` set to its public HTTPS URL. A browser blocks plain-HTTP API calls from an HTTPS page.

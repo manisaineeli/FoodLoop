@@ -26,10 +26,18 @@ let pickupsFilter = 'all';
 let partnersFilter = 'all';
 
 async function api(path, options = {}) {
-  const res = await fetch(API_URL + path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options
-  });
+  let res;
+  try {
+    res = await fetch(API_URL + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options
+    });
+  } catch (err) {
+    // fetch() only rejects when the request never reached the server, so there
+    // is no status code to explain the problem. The browser's own "Failed to
+    // fetch" says nothing useful — replace it with an actionable hint.
+    throw new Error(backendHint());
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `API error ${res.status}`);
   return data;
@@ -61,7 +69,7 @@ async function loadData() {
     renderScenePhotos();
     if (auth.currentUser?.role === 'ngo') renderNgoGrid();
   } catch (err) {
-    showToast(backendHint());
+    showToast(err.message || backendHint());
   }
 }
 
@@ -169,10 +177,11 @@ async function addPartner(p) {
   db.partners.push(partner);
 }
 
+// Turn an unreachable backend into a message the user can act on.
 function backendHint() {
   if (location.protocol === 'file:') {
-    return 'Open the app through a local web server, not by double-clicking index.html. ' +
-           'Run "python -m http.server 8000" in the project folder and visit http://localhost:8000';
+    return 'Cannot reach the API from a file:// page. Start the server with "npm start", ' +
+           'then open http://localhost:5000 instead of double-clicking index.html.';
   }
   if (!/^https?:$/.test(location.protocol)) {
     return 'This page is served over ' + location.protocol + ', which blocks API requests.';
@@ -181,7 +190,13 @@ function backendHint() {
     return 'This page is hosted at ' + location.hostname + ', so "localhost:5000" is not reachable. ' +
            'Set window.FOODLOOP_API in config.js to a public backend URL.';
   }
-  return 'Cannot reach the server. Start it with "npm start" in the project folder.';
+  // Compare the API origin, not the full path (/api is appended by API_URL).
+  const apiOrigin = API_URL.replace(/\/+$/, '').replace(/\/api$/, '');
+  if (!/^https?:\/\/(localhost|127\.0\.0\.1):5000$/.test(apiOrigin)) {
+    return 'The app expects the API at ' + apiOrigin + '. Fix window.FOODLOOP_API in config.js.';
+  }
+  return 'Cannot reach ' + apiOrigin + '. Start it with "npm start" in the project folder, ' +
+         'then reload the page.';
 }
 
 // ===================== Auth =====================
@@ -343,7 +358,7 @@ $('#signinForm').addEventListener('submit', async (e) => {
   submit.disabled = true;
   try {
     const result = await auth.signin(form.get('email'), form.get('password'), formRoles.signin);
-    showApp();
+    await showApp();
   } catch (err) {
     errorEl.textContent = err.message;
   } finally {
@@ -360,7 +375,7 @@ $('#signupForm').addEventListener('submit', async (e) => {
   submit.disabled = true;
   try {
     const result = await auth.signup(form.get('name'), form.get('email'), form.get('password'), formRoles.signup);
-    showApp();
+    await showApp();
   } catch (err) {
     errorEl.textContent = err.message;
   } finally {
