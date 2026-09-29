@@ -25,7 +25,7 @@ function describeUri(uri) {
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB:', describeUri(MONGODB_URI));
-    return seedDatabaseIfEmpty();
+    return seedDatabaseIfEmpty().then(() => backfillListingImages());
   })
   .catch(err => {
     console.error('MongoDB connection error:', err.message);
@@ -51,6 +51,7 @@ const listingSchema = new mongoose.Schema({
   detail: String,
   quantity: String,
   expiry: String,
+  image: { type: String, default: '' }, // real photo of the food, resolved from the name
   status: { type: String, default: 'Available' }, // Available | Reserved
   requests: { type: String, default: '0 requests' },
   createdAt: { type: Date, default: Date.now }
@@ -128,6 +129,98 @@ const Waste = mongoose.model('Waste', wasteSchema);
 const Activity = mongoose.model('Activity', activitySchema);
 const Metric = mongoose.model('Metric', metricSchema);
 
+// ===================== Food photo resolution =====================
+// Every listing gets a real photo of the food, fetched from its name
+// (TheMealDB search for dishes, ingredient photos for generics).
+
+const DEFAULT_FOOD_IMAGE = 'https://www.themealdb.com/images/ingredients/Bread.png';
+const INGREDIENT_IMAGE = {
+  produce: 'Vegetables', vegetables: 'Vegetables', veg: 'Vegetables', greens: 'Vegetables',
+  salad: 'Vegetables', fruit: 'Fruit', fruits: 'Fruit', apple: 'Apple', apples: 'Apple',
+  banana: 'Banana', mango: 'Mango', mangoes: 'Mango', orange: 'Fruit', grapes: 'Fruit',
+  tomato: 'Tomato', tomatoes: 'Tomato', potato: 'Potato', potatoes: 'Potato', onion: 'Onion',
+  carrot: 'Carrot', carrots: 'Carrot', bread: 'Bread', bakery: 'Bread', pastry: 'Bread', rolls: 'Bread', buns: 'Bread',
+  rice: 'Rice', chicken: 'Chicken', lentils: 'Lentils', dal: 'Lentils', milk: 'Milk',
+  paneer: 'Paneer', noodles: 'Noodles', noodle: 'Noodles'
+};
+const FILLER_WORDS = ['prepared', 'mixed', 'assorted', 'fresh', 'boxes', 'box', 'items', 'item', 'packets', 'packet', 'kg', 'kilograms', 'units', 'unit', 'portions', 'portion', 'organic', 'surplus', 'batch', '&', 'and'];
+
+function cleanFoodKeyword(name) {
+  return String(name || '').toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/[\s-]+/)
+    .filter(w => w && w.length > 1 && !FILLER_WORDS.includes(w))
+    .slice(0, 3)
+    .join(' ') || 'food';
+}
+
+async function mealDbSearch(q) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 5000);
+  try {
+    const res = await fetch('https://www.themealdb.com/api/json/v1/1/search.php?s=' + encodeURIComponent(q), { signal: ctrl.signal });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && data.meals && data.meals.length ? data.meals : null;
+  } catch (err) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function ingredientUrl(keyword) {
+  if (!keyword) return null;
+  const known = INGREDIENT_IMAGE[keyword];
+  return known
+    ? 'https://www.themealdb.com/images/ingredients/' + known + '.png'
+    : null;
+}
+
+async function resolveFoodImage(name) {
+  const kw = cleanFoodKeyword(name);
+  const words = kw.split(' ');
+  const last = words[words.length - 1];
+  const first = words[0];
+
+  // 1) Dish photo from TheMealDB — full keyword first (e.g. "biryani"),
+  //    then the last word (handles "Chicken Biryani" → biryani).
+  try {
+    const full = await mealDbSearch(kw);
+    if (full) return full[0].strMealThumb;
+    if (words.length > 1 && last) {
+      const byLast = await mealDbSearch(last);
+      if (byLast) return byLast[0].strMealThumb;
+    }
+  } catch (err) { /* fall through */ }
+
+  // 2) Known ingredient photo (mangoes → Mango.png, etc.).
+  const ing = ingredientUrl(kw) || ingredientUrl(last) || ingredientUrl(first);
+  if (ing) return ing;
+
+  // 3) Ingredient photo for the keyword itself.
+  for (const w of [last, first]) {
+    if (!w) continue;
+    const cap = w[0].toUpperCase() + w.slice(1);
+    const url = 'https://www.themealdb.com/images/ingredients/' + encodeURIComponent(cap) + '.png';
+    try {
+      const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
+      if (res.ok) return url;
+    } catch (err) { /* try next */ }
+  }
+
+  return DEFAULT_FOOD_IMAGE;
+}
+
+async function backfillListingImages() {
+  const needs = await Listing.find({ $or: [{ image: { $exists: false } }, { image: '' }, { image: null }] });
+  for (const listing of needs) {
+    listing.image = await resolveFoodImage(listing.name);
+    await listing.save();
+  }
+  if (needs.length) console.log('📸 Assigned photos to ' + needs.length + ' existing listing(s).');
+}
+
 // ===================== Seed =====================
 
 async function seedDatabaseIfEmpty() {
@@ -137,9 +230,9 @@ async function seedDatabaseIfEmpty() {
   console.log('🌱 Seeding demo data into MongoDB...');
 
   await Listing.insertMany([
-    { emoji: '🍱', name: 'Prepared meal boxes', detail: 'Vegetarian · 450 kcal', quantity: '35 boxes', expiry: 'Today, 8:00 PM', status: 'Available', requests: '2 requests' },
-    { emoji: '🥬', name: 'Fresh mixed produce', detail: 'Vegetables · 18 kg', quantity: '18 kg', expiry: 'Tomorrow', status: 'Available', requests: '1 request' },
-    { emoji: '🥖', name: 'Assorted bakery items', detail: 'Bread & pastries · 9 kg', quantity: '9 kg', expiry: 'Tomorrow, 10:00 AM', status: 'Reserved', requests: 'Accepted' }
+    { emoji: '🍱', name: 'Prepared meal boxes', detail: 'Vegetarian · 450 kcal', quantity: '35 boxes', expiry: 'Today, 8:00 PM', status: 'Available', requests: '2 requests', image: 'https://www.themealdb.com/images/media/meals/xrttsx1487339558.jpg' },
+    { emoji: '🥬', name: 'Fresh mixed produce', detail: 'Vegetables · 18 kg', quantity: '18 kg', expiry: 'Tomorrow', status: 'Available', requests: '1 request', image: 'https://www.themealdb.com/images/ingredients/Vegetables.png' },
+    { emoji: '🥖', name: 'Assorted bakery items', detail: 'Bread & pastries · 9 kg', quantity: '9 kg', expiry: 'Tomorrow, 10:00 AM', status: 'Reserved', requests: 'Accepted', image: 'https://www.themealdb.com/images/ingredients/Bread.png' }
   ]);
 
   await Request.insertMany([
@@ -323,12 +416,14 @@ app.post('/api/listings', async (req, res) => {
     if (!name || !quantity || !expiry) {
       return res.status(400).json({ error: 'Food name, quantity and best-before are required.' });
     }
+    const image = await resolveFoodImage(name);
     const listing = await Listing.create({
       emoji: emoji || '🍽️',
       name,
       detail: detail || 'Fresh surplus food',
       quantity,
       expiry,
+      image,
       status: 'Available',
       requests: '0 requests'
     });

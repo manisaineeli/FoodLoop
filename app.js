@@ -204,6 +204,11 @@ function renderProfile() {
   set('profileRole', roleLabel);
   set('profileAvatar', initials);
   set('topAvatar', initials);
+  set('settingsName', displayName);
+  set('settingsEmail', user.email);
+  set('settingsAvatar', initials);
+  set('settingsRole', roleLabel);
+  set('settingsApi', API_URL.replace(/\/api$/, ''));
 }
 
 // ===================== NGO Dashboard =====================
@@ -224,7 +229,7 @@ function renderNgoGrid() {
   $('#ngoGrid').innerHTML = available.map((item) => {
     const isRequested = requested.has(item.name);
     return `<article class="ngo-card">
-      <div class="ngo-card-top"><span class="big-food">${item.emoji}</span><span class="status available">${item.status}</span></div>
+      <div class="ngo-card-photo">${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy">` : `<span class="big-food">${item.emoji}</span>`}${item.status ? `<span class="status available">${item.status}</span>` : ''}</div>
       <h3>${item.name}</h3>
       <p class="ngo-detail">${item.detail}</p>
       <div class="ngo-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div>
@@ -321,7 +326,7 @@ $('#ngoGrid').addEventListener('click', async (e) => {
 
 // ===================== Views =====================
 
-const viewNames = { overview: 'Overview', listings: 'Food listings', requests: 'Requests', pickups: 'Pickups', waste: 'Waste log', partners: 'Partners', reports: 'Reports', docs: 'Project documentation' };
+const viewNames = { overview: 'Overview', listings: 'Food listings', requests: 'Requests', pickups: 'Pickups', waste: 'Waste log', partners: 'Partners', reports: 'Reports', docs: 'Project documentation', settings: 'Settings' };
 
 function showView(view) {
   $$('.view').forEach((el) => el.classList.remove('active-view'));
@@ -346,9 +351,9 @@ function showToast(message) {
 
 function renderListingCards() {
   const search = ($('#listingSearch')?.value || '').toLowerCase();
-  $('#listingCards').innerHTML = db.listings.filter((item) => item.name.toLowerCase().includes(search)).map((item) => `<article class="listing-card"><div class="listing-card-top"><span class="big-food">${item.emoji}</span><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></div><h3>${item.name}</h3><p>${item.detail}</p><div class="listing-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div></article>`).join('') || '<div class="empty-state">No listings found.</div>';
+  $('#listingCards').innerHTML = db.listings.filter((item) => item.name.toLowerCase().includes(search)).map((item) => `<article class="listing-card"><div class="listing-card-photo">${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy">` : `<span class="big-food">${item.emoji}</span>`}</div><div class="listing-card-head"><div><h3>${item.name}</h3><p>${item.detail}</p></div><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></div><div class="listing-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div></article>`).join('') || '<div class="empty-state">No listings found.</div>';
 
-  $('#listingRows').innerHTML = db.listings.map((item) => `<tr><td><div class="food-cell"><span class="food-emoji">${item.emoji}</span><div><strong>${item.name}</strong><small>${item.detail}</small></div></div></td><td>${item.quantity}</td><td>${item.expiry}</td><td><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></td><td>${item.requests}</td><td><button class="row-menu">•••</button></td></tr>`).join('');
+  $('#listingRows').innerHTML = db.listings.map((item) => `<tr><td><div class="food-cell">${item.image ? `<img class="food-thumb" src="${item.image}" alt="${item.name}" loading="lazy">` : `<span class="food-emoji">${item.emoji}</span>`}<div><strong>${item.name}</strong><small>${item.detail}</small></div></div></td><td>${item.quantity}</td><td>${item.expiry}</td><td><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></td><td>${item.requests}</td><td><button class="row-menu">•••</button></td></tr>`).join('');
 }
 
 function renderRequests() {
@@ -407,6 +412,33 @@ $('#modalClose').addEventListener('click', closeListingModal);
 $('#modalCancel').addEventListener('click', closeListingModal);
 $('#modalBackdrop').addEventListener('click', (event) => { if (event.target.id === 'modalBackdrop') closeListingModal(); });
 $('#listingSearch').addEventListener('input', renderListingCards);
+
+// ===================== Settings · Help · Log out =====================
+
+// Help center modal
+$('#helpBtn').addEventListener('click', () => $('#helpBackdrop').classList.add('open'));
+$('#helpClose').addEventListener('click', () => $('#helpBackdrop').classList.remove('open'));
+$('#helpDone').addEventListener('click', () => $('#helpBackdrop').classList.remove('open'));
+$('#helpBackdrop').addEventListener('click', (event) => { if (event.target.id === 'helpBackdrop') $('#helpBackdrop').classList.remove('open'); });
+
+// Log out — bottom button and profile ••• menu
+$('#logoutBtn').addEventListener('click', () => auth.logout());
+$('#profileMenuBtn').addEventListener('click', (e) => { e.stopPropagation(); $('#profileMenu').classList.toggle('open'); });
+document.addEventListener('click', () => { if ($('#profileMenu')) $('#profileMenu').classList.remove('open'); });
+$('#profileMenu').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action="logout"]');
+  if (btn) { $('#profileMenu').classList.remove('open'); auth.logout(); }
+});
+
+// Settings view — "Open project documentation" button
+$$('[data-open-docs]').forEach((item) => item.addEventListener('click', () => showView('docs')));
+
+// Notification toggles persist in localStorage
+$$('.settings-toggle input').forEach((input) => {
+  const stored = localStorage.getItem('foodloop_' + input.id);
+  if (stored !== null) input.checked = stored === '1';
+  input.addEventListener('change', () => localStorage.setItem('foodloop_' + input.id, input.checked ? '1' : '0'));
+});
 
 $('#listingForm').addEventListener('submit', async (event) => {
   event.preventDefault();
