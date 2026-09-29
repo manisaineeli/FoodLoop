@@ -50,10 +50,19 @@ async function loadData() {
     renderWasteTable();
     renderActivityList();
     renderMetrics();
+    renderNavCounts();
     if (auth.currentUser?.role === 'ngo') renderNgoGrid();
   } catch (err) {
     showToast(backendHint());
   }
+}
+
+// Live counts for the sidebar (Food listings, Requests) from MongoDB.
+function renderNavCounts() {
+  const lc = document.getElementById('navListingsCount');
+  if (lc) lc.textContent = db.listings.length;
+  const rc = document.getElementById('navRequestsCount');
+  if (rc) rc.textContent = db.requests.filter(r => r.status === 'pending').length;
 }
 
 async function addListing({ emoji, name, detail, quantity, expiry }) {
@@ -312,7 +321,7 @@ $('#ngoGrid').addEventListener('click', async (e) => {
 
 // ===================== Views =====================
 
-const viewNames = { overview: 'Overview', listings: 'Food listings', requests: 'Requests', pickups: 'Pickups', waste: 'Waste log', partners: 'Partners', reports: 'Reports' };
+const viewNames = { overview: 'Overview', listings: 'Food listings', requests: 'Requests', pickups: 'Pickups', waste: 'Waste log', partners: 'Partners', reports: 'Reports', docs: 'Project documentation' };
 
 function showView(view) {
   $$('.view').forEach((el) => el.classList.remove('active-view'));
@@ -467,6 +476,9 @@ $('.view-heading .secondary-button')?.addEventListener('click', async () => {
   }
 });
 
+// Export report (secondary button on reports view)
+$('#reportsView .secondary-button')?.addEventListener('click', exportReport);
+
 $('#partnerGrid').parentElement.querySelector('.view-heading .primary-button')?.addEventListener('click', async () => {
   const name = prompt('Partner name (e.g. New Shelter):');
   if (!name) return;
@@ -478,6 +490,43 @@ $('#partnerGrid').parentElement.querySelector('.view-heading .primary-button')?.
     showToast('Could not invite: ' + err.message);
   }
 });
+
+// Export report — builds a downloadable impact report from live data.
+function exportReport() {
+  const m = db.metrics || {};
+  const lines = [
+    'FOODLOOP — WASTE REDUCTION IMPACT REPORT',
+    'Generated: ' + new Date().toLocaleString(),
+    '==========================================',
+    '',
+    `Food diverted        : ${m.foodDiverted || 0} kg`,
+    `Meals shared         : ${m.mealsShared || 0}`,
+    `Pending pickups      : ${m.pendingPickups || 0}`,
+    `Active partners      : ${m.activePartners || 0}`,
+    '',
+    'Food listings        : ' + db.listings.length,
+    'Donation requests    : ' + db.requests.filter(r => r.status === 'pending').length + ' pending',
+    'Partners             : ' + db.partners.length,
+    'Pickups scheduled    : ' + db.pickups.length,
+    'Waste entries        : ' + db.waste.length,
+    '',
+    '--- Current listings ---'
+  ];
+  db.listings.forEach(l => lines.push(` - ${l.name} (${l.quantity}) ${l.status}`));
+  lines.push('', '--- Pending requests ---');
+  db.requests.filter(r => r.status === 'pending').forEach(r => lines.push(` - ${r.name} requested ${r.item}`));
+  lines.push('', 'Report from the Food Waste Reduction Platform (OOAD).');
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'foodloop-report.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+  showToast('Report exported');
+}
 
 // ===================== Initialisation =====================
 
