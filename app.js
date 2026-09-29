@@ -170,7 +170,31 @@ async function showApp() {
     $('#appShell').classList.remove('hidden');
     $('#ngoDashboard').classList.add('hidden');
   }
+  renderProfile();
   await loadData();
+}
+
+// Fill the dashboard with the logged-in user's details
+// instead of the hardcoded demo persona (Priya Varma / Harbor House).
+function renderProfile() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const displayName = user.name;
+  const firstName = displayName.split(/\s+/)[0] || displayName;
+  const initials = displayName.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const roleLabel = user.role === 'ngo' ? 'NGO' : 'Admin';
+
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+
+  set('welcomeName', firstName);
+  set('sceneProviderName', displayName);
+  set('wsName', displayName);
+  set('wsAvatar', initials);
+  set('profileName', displayName);
+  set('profileRole', roleLabel);
+  set('profileAvatar', initials);
+  set('topAvatar', initials);
 }
 
 // ===================== NGO Dashboard =====================

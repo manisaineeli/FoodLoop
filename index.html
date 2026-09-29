@@ -59,7 +59,7 @@
     <div class="app-shell hidden" id="appShell">
       <aside class="sidebar" id="sidebar">
         <div class="brand"><span class="brand-mark">✳</span><span>food<span>loop</span></span></div>
-        <div class="workspace-switcher"><span class="avatar avatar-green">H</span><span><strong>Harbor House</strong><small>Provider workspace</small></span><span class="chevron">⌄</span></div>
+        <div class="workspace-switcher"><span class="avatar avatar-green" id="wsAvatar">H</span><span><strong id="wsName">Harbor House</strong><small>Provider workspace</small></span><span class="chevron">⌄</span></div>
         <nav class="primary-nav" aria-label="Main navigation">
           <p class="nav-label">Workspace</p>
           <button class="nav-item active" data-view="overview"><span>◈</span>Overview</button>
@@ -71,17 +71,17 @@
           <button class="nav-item" data-view="partners"><span>♧</span>Partners</button>
           <button class="nav-item" data-view="reports"><span>▥</span>Reports</button>
         </nav>
-        <div class="sidebar-bottom"><button class="nav-item"><span>⚙</span>Settings</button><div class="help-card"><span class="help-icon">?</span><div><strong>Need a hand?</strong><small>Visit our help center</small></div><span>→</span></div><div class="profile"><span class="avatar avatar-purple">PV</span><span><strong>Priya Varma</strong><small>Admin</small></span><button aria-label="Profile menu">•••</button></div></div>
+        <div class="sidebar-bottom"><button class="nav-item"><span>⚙</span>Settings</button><div class="help-card"><span class="help-icon">?</span><div><strong>Need a hand?</strong><small>Visit our help center</small></div><span>→</span></div><div class="profile"><span class="avatar avatar-purple" id="profileAvatar">PV</span><span><strong id="profileName">Priya Varma</strong><small id="profileRole">Admin</small></span><button aria-label="Profile menu">•••</button></div></div>
       </aside>
 
       <main class="main-content">
-        <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button><div class="breadcrumb"><span>Workspace</span><span>/</span><strong id="breadcrumbCurrent">Overview</strong></div><div class="topbar-actions"><button class="icon-button" aria-label="Search">⌕</button><button class="icon-button notification" aria-label="Notifications">♧<i></i></button><button class="top-avatar avatar avatar-purple">PV</button></div></header>
+        <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button><div class="breadcrumb"><span>Workspace</span><span>/</span><strong id="breadcrumbCurrent">Overview</strong></div><div class="topbar-actions"><button class="icon-button" aria-label="Search">⌕</button><button class="icon-button notification" aria-label="Notifications">♧<i></i></button><button class="top-avatar avatar avatar-purple" id="topAvatar">PV</button></div></header>
         <div class="page-wrap">
           <section class="view active-view" id="overviewView">
-            <div class="welcome-row"><div><p class="eyebrow">MONDAY, 14 OCTOBER 2024</p><h1>Good morning, Priya <span class="wave">👋</span></h1><p class="subtitle">Here’s what’s happening with your surplus today.</p></div><button class="primary-button" id="addListingBtn"><span>＋</span> Add food listing</button></div>
+            <div class="welcome-row"><div><p class="eyebrow">MONDAY, 14 OCTOBER 2024</p><h1>Good morning, <span id="welcomeName">Priya</span> <span class="wave">👋</span></h1><p class="subtitle">Here’s what’s happening with your surplus today.</p></div><button class="primary-button" id="addListingBtn"><span>＋</span> Add food listing</button></div>
             <section class="impact-stage" aria-label="FoodLoop impact journey">
               <div class="stage-copy"><span class="stage-kicker">THE LOOP IN MOTION</span><h2>Good food finds<br /><em>its next table.</em></h2><p>Every listing connects a provider to a nearby community partner before surplus becomes waste.</p><div class="stage-pills"><span><i class="pulse-dot"></i> Live network</span><span>24 partners nearby</span></div></div>
-              <div class="scene-3d" id="scene3d"><div class="scene-grid"></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="food-cube cube-one"><span class="cube-top">🍊</span><span class="cube-front">fresh<br />surplus</span><span class="cube-side">18 kg</span></div><div class="food-cube cube-two"><span class="cube-top">🥗</span><span class="cube-front">shared<br />meals</span><span class="cube-side">3.8k</span></div><div class="scene-node node-provider"><span class="node-icon">♨</span><small>Provider</small><b>Harbor House</b></div><div class="scene-node node-community"><span class="node-icon">♧</span><small>Community</small><b>Hope Foundation</b></div><div class="scene-arrow arrow-one">↗</div><div class="scene-arrow arrow-two">↗</div><div class="scene-center"><span>✳</span><small>FOODLOOP</small></div></div>
+              <div class="scene-3d" id="scene3d"><div class="scene-grid"></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="food-cube cube-one"><span class="cube-top">🍊</span><span class="cube-front">fresh<br />surplus</span><span class="cube-side">18 kg</span></div><div class="food-cube cube-two"><span class="cube-top">🥗</span><span class="cube-front">shared<br />meals</span><span class="cube-side">3.8k</span></div><div class="scene-node node-provider"><span class="node-icon">♨</span><small>Provider</small><b id="sceneProviderName">Harbor House</b></div><div class="scene-node node-community"><span class="node-icon">♧</span><small>Community</small><b>Hope Foundation</b></div><div class="scene-arrow arrow-one">↗</div><div class="scene-arrow arrow-two">↗</div><div class="scene-center"><span>✳</span><small>FOODLOOP</small></div></div>
               <div class="stage-stat"><span class="stat-ring">92%</span><div><strong>of listed food</strong><small>reaches a partner</small></div></div>
             </section>
             <div class="metric-grid"><article class="metric-card metric-green"><div class="metric-top"><span class="metric-icon">♨</span><span class="trend up">↗ 18.4%</span></div><p>Food diverted</p><strong>1,284 <small>kg</small></strong><span class="metric-note">vs. 1,084 kg last month</span></article><article class="metric-card metric-blue"><div class="metric-top"><span class="metric-icon">♧</span><span class="trend up">↗ 12.2%</span></div><p>Meals shared</p><strong>3,842</strong><span class="metric-note">from 46 successful donations</span></article><article class="metric-card metric-orange"><div class="metric-top"><span class="metric-icon">◷</span><span class="trend neutral">This week</span></div><p>Pending pickups</p><strong>08</strong><span class="metric-note">3 due in the next 24 hours</span></article><article class="metric-card metric-purple"><div class="metric-top"><span class="metric-icon">♧</span><span class="trend up">↗ 5 new</span></div><p>Active partners</p><strong>24</strong><span class="metric-note">NGOs and community kitchens</span></article></div>
@@ -124,7 +124,7 @@
     </div>
 
     <div class="toast" id="toast"><span>✓</span><span id="toastMessage">Listing published</span></div>
-    <script src="config.js?v=3"></script>
-    <script src="app.js?v=3"></script>
+    <script src="config.js?v=4"></script>
+    <script src="app.js?v=4"></script>
   </body>
 </html>
