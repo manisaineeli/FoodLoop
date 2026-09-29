@@ -174,3 +174,21 @@
 .settings-logout{background:#fff;color:#c15a4f;border:1px solid #f0d6d2;box-shadow:none}
 .settings-logout:hover{background:#fdeceb;color:#a14238;border-color:#e9bdb7}
 @media(max-width:720px){.settings-session{flex-direction:column;align-items:stretch;text-align:center}}
+
+/* ===== Small square food photos (instead of big banner photos) ===== */
+.listing-card-head{display:flex;align-items:center;gap:12px;margin:0}
+.listing-card-thumb{position:relative;width:62px;height:62px;flex-shrink:0;border-radius:12px;overflow:hidden;background:#eef6f1;border:1px solid var(--line)}
+.listing-card-thumb .food-photo-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;background:#eef6f1}
+.listing-card-thumb img.listing-photo-img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1;display:block}
+.listing-card-info{min-width:0;flex:1}
+.listing-card-info h3{font:700 14px Manrope;margin:0 0 3px}
+.listing-card-info p{color:#8ba098;font-size:11px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.listing-card-head .status{flex-shrink:0}
+.ngo-card-head{display:flex;align-items:center;gap:12px}
+.ngo-card-thumb{position:relative;width:62px;height:62px;flex-shrink:0;border-radius:12px;overflow:hidden;background:#eef6f1;border:1px solid var(--line)}
+.ngo-card-thumb .food-photo-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;background:#eef6f1}
+.ngo-card-thumb img.ngo-photo-img{width:100%;height:100%;object-fit:cover;position:relative;z-index:1;display:block}
+.ngo-card-title{min-width:0;flex:1}
+.ngo-card-title h3{font:700 14px Manrope;margin:0}
+.ngo-card-title .ngo-detail{margin:3px 0 0;color:#8ba098;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ngo-card-head .status{flex-shrink:0}

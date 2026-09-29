@@ -253,9 +253,11 @@ function renderNgoGrid() {
   $('#ngoGrid').innerHTML = available.map((item) => {
     const isRequested = requested.has(item.name);
     return `<article class="ngo-card">
-      <div class="ngo-card-photo">${foodPhotoHtml(item, 'ngo-photo-img')}${item.status ? `<span class="status available">${item.status}</span>` : ''}</div>
-      <h3>${item.name}</h3>
-      <p class="ngo-detail">${item.detail}</p>
+      <div class="ngo-card-head">
+        <div class="ngo-card-thumb">${foodPhotoHtml(item, 'ngo-photo-img')}</div>
+        <div class="ngo-card-title"><h3>${item.name}</h3><p class="ngo-detail">${item.detail}</p></div>
+        <span class="status available">${item.status}</span>
+      </div>
       <div class="ngo-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div>
       <button class="ngo-request-btn ${isRequested ? 'requested' : ''}" data-food="${item.name}" ${isRequested ? 'disabled' : ''}>
         ${isRequested ? '✓ Request sent' : 'Request this food'}
@@ -375,7 +377,7 @@ function showToast(message) {
 
 function renderListingCards() {
   const search = ($('#listingSearch')?.value || '').toLowerCase();
-  $('#listingCards').innerHTML = db.listings.filter((item) => item.name.toLowerCase().includes(search)).map((item) => `<article class="listing-card"><div class="listing-card-photo">${foodPhotoHtml(item, 'listing-photo-img')}</div><div class="listing-card-head"><div><h3>${item.name}</h3><p>${item.detail}</p></div><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></div><div class="listing-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div></article>`).join('') || '<div class="empty-state">No listings found.</div>';
+  $('#listingCards').innerHTML = db.listings.filter((item) => item.name.toLowerCase().includes(search)).map((item) => `<article class="listing-card"><div class="listing-card-head"><div class="listing-card-thumb">${foodPhotoHtml(item, 'listing-photo-img')}</div><div class="listing-card-info"><h3>${item.name}</h3><p>${item.detail}</p></div><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></div><div class="listing-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div></article>`).join('') || '<div class="empty-state">No listings found.</div>';
 
   $('#listingRows').innerHTML = db.listings.map((item) => `<tr><td><div class="food-cell"><div class="food-thumb-wrap">${foodPhotoHtml(item, 'food-thumb')}</div><div><strong>${item.name}</strong><small>${item.detail}</small></div></div></td><td>${item.quantity}</td><td>${item.expiry}</td><td><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></td><td>${item.requests}</td><td><button class="row-menu">•••</button></td></tr>`).join('');
 }
