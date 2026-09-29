@@ -41,11 +41,9 @@ if not errorlevel 1 (
     type "%USERPROFILE%\.foodloop\foodloop.log" >> "%USERPROFILE%\.foodloop\foodloop-prev.log" 2>nul
     del "%USERPROFILE%\.foodloop\foodloop.log" 2>nul
   )
-  if exist "%~dp0run-server.cmd" (
-    start "FoodLoop server" /min cmd /c "%~dp0run-server.cmd"
-  ) else (
-    start "FoodLoop server" /min cmd /c "node server.js"
-  )
+  rem Start detached: -WindowStyle Hidden + redirected output means the
+  rem server has no console, so it is not killed when this script exits.
+  powershell -NoProfile -Command "Start-Process -FilePath 'C:\Program Files\nodejs\node.exe' -ArgumentList 'server.js' -WorkingDirectory '%~dp0' -WindowStyle Hidden -RedirectStandardOutput '%USERPROFILE%\.foodloop\foodloop.log' -RedirectStandardError '%USERPROFILE%\.foodloop\foodloop.err'"
 )
 
 echo [3/3] Waiting for the server to come up ...

@@ -15,7 +15,7 @@ The site is published with GitHub Pages from the `master` branch. Every push to 
 
 ## Run it
 
-**Easiest:** double-click `start.cmd`. It checks MongoDB, starts the API server (minimized), and opens http://localhost:5000 in your browser. Run it again any time — if the server is already up it just opens the page.
+**Easiest:** double-click `start.cmd`. It checks MongoDB, starts the API server (detached, no console window, logs to `%USERPROFILE%\.foodloop\foodloop.log`), and opens http://localhost:5000 in your browser. Run it again any time — if the server is already up it just opens the page. The server keeps running after the script closes.
 
 FoodLoop stores all of its data in MongoDB, so the Express server **must be running** before you log in. Signup and signin go through `POST /api/signup` and `POST /api/signin`; if the server is down the browser reports a failed request and the login form shows a hint instead.
 
