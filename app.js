@@ -255,6 +255,8 @@ function renderProfile() {
   set('profileRole', roleLabel);
   set('profileAvatar', initials);
   set('topAvatar', initials);
+  set('topMenuName', displayName);
+  set('topMenuEmail', user.email);
   set('settingsName', displayName);
   set('settingsEmail', user.email);
   set('settingsAvatar', initials);
@@ -521,6 +523,104 @@ $$('.settings-toggle input').forEach((input) => {
   const stored = localStorage.getItem('foodloop_' + input.id);
   if (stored !== null) input.checked = stored === '1';
   input.addEventListener('change', () => localStorage.setItem('foodloop_' + input.id, input.checked ? '1' : '0'));
+});
+
+// ===================== Topbar: Search · Notifications · Profile =====================
+
+// Search across the live MongoDB mirror and jump to the matching view.
+function runGlobalSearch() {
+  const q = ($('#globalSearchInput').value || '').trim().toLowerCase();
+  const box = $('#globalSearchResults');
+  if (!q) {
+    box.innerHTML = '<p class="search-empty">Start typing to search across your workspace.</p>';
+    $('#searchResultCount').textContent = '';
+    return;
+  }
+  const groups = [
+    { label: 'Food listings', view: 'listings', items: db.listings.filter((l) => (l.name + ' ' + (l.detail || '') + ' ' + l.quantity).toLowerCase().includes(q)).map((l) => ({ title: l.name, sub: l.detail || l.quantity, status: l.status })) },
+    { label: 'Requests', view: 'requests', items: db.requests.filter((r) => (r.name + ' ' + r.item).toLowerCase().includes(q)).map((r) => ({ title: r.item, sub: r.name, status: r.status })) },
+    { label: 'Pickups', view: 'pickups', items: db.pickups.filter((p) => (p.item + ' ' + (p.partner || '') + ' ' + (p.time || '')).toLowerCase().includes(q)).map((p) => ({ title: p.item, sub: `${p.day || ''} · ${p.partner || '—'}`, status: '' })) },
+    { label: 'Partners', view: 'partners', items: db.partners.filter((p) => (p.name + ' ' + (p.detail || '')).toLowerCase().includes(q)).map((p) => ({ title: p.name, sub: p.detail, status: p.status })) }
+  ];
+  const total = groups.reduce((n, g) => n + g.items.length, 0);
+  $('#searchResultCount').textContent = total ? `${total} result${total === 1 ? '' : 's'}` : 'No results';
+  const html = [];
+  groups.forEach((g) => {
+    if (!g.items.length) return;
+    html.push(`<p class="search-group">${g.label}<span>${g.items.length}</span></p>`);
+    g.items.slice(0, 4).forEach((it) => html.push(`<button class="search-result" data-view="${g.view}"><span class="result-tag ${(it.status || '').toLowerCase()}">${it.status || g.label.replace('s', '').slice(0, 1)}</span><span class="result-main"><strong>${it.title}</strong><small>${it.sub || ''}</small></span><span class="result-go">→</span></button>`));
+  });
+  box.innerHTML = html.join('') || `<p class="search-empty">Nothing matches “${q}” — try another keyword.</p>`;
+}
+
+function openSearch() {
+  $('#searchBackdrop').classList.add('open');
+  $('#globalSearchInput').value = '';
+  runGlobalSearch();
+  window.setTimeout(() => $('#globalSearchInput').focus(), 30);
+}
+function closeSearch() { $('#searchBackdrop').classList.remove('open'); }
+
+function renderNotifications() {
+  const list = db.activities.slice(0, 6);
+  $('#notifList').innerHTML = list.map((a) => `<div class="notif-item"><span class="notif-icon ${a.iconClass || 'green-bg'}">${a.icon || '•'}</span><div><strong>${a.title}</strong><p>${a.description}</p><small>${a.time}</small></div></div>`).join('') || '<p class="notif-empty">No notifications yet.</p>';
+  $('#notifCount').textContent = db.activities.length;
+  $('#notifTimestamp').textContent = list.length ? 'Latest activity' : '—';
+}
+
+function closeTopDropdowns() { $('#notifPanel').classList.remove('open'); $('#topMenu').classList.remove('open'); }
+
+// — Search (⌕)
+$('#topSearchBtn').addEventListener('click', openSearch);
+$('#searchClose').addEventListener('click', closeSearch);
+$('#searchBackdrop').addEventListener('click', (e) => { if (e.target.id === 'searchBackdrop') closeSearch(); });
+$('#globalSearchInput').addEventListener('input', runGlobalSearch);
+$('#globalSearchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = $('#globalSearchResults .search-result'); if (first) first.click(); } });
+$('#globalSearchResults').addEventListener('click', (e) => {
+  const btn = e.target.closest('.search-result');
+  if (!btn) return;
+  showView(btn.dataset.view);
+  closeSearch();
+});
+
+// — Notifications (♧)
+$('#topNotifBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const wasOpen = $('#notifPanel').classList.contains('open');
+  closeTopDropdowns();
+  if (!wasOpen) {
+    $('#notifPanel').classList.add('open');
+    renderNotifications();
+  }
+  // Clear the unread dot once the panel has been opened
+  const dot = $('#notifBtnDot');
+  if (dot) dot.remove();
+});
+$('#notifPanel').addEventListener('click', (e) => e.stopPropagation());
+$('#notifViewAll').addEventListener('click', () => { closeTopDropdowns(); showView('overview'); });
+
+// — Profile avatar (S)
+$('#topAvatar').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const wasOpen = $('#topMenu').classList.contains('open');
+  closeTopDropdowns();
+  if (!wasOpen) $('#topMenu').classList.add('open');
+});
+$('#topMenu').addEventListener('click', (e) => e.stopPropagation());
+$('#topMenu').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-topaction]');
+  if (!btn) return;
+  closeTopDropdowns();
+  if (btn.dataset.topaction === 'settings') showView('settings');
+  if (btn.dataset.topaction === 'help') $('#helpBackdrop').classList.add('open');
+  if (btn.dataset.topaction === 'logout') auth.logout();
+});
+
+// Close search + dropdowns
+document.addEventListener('click', closeTopDropdowns);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeSearch(); closeTopDropdowns(); }
+  if (e.key === '/' && !/input|textarea|select/i.test(document.activeElement.tagName)) { e.preventDefault(); openSearch(); }
 });
 
 $('#listingForm').addEventListener('submit', async (event) => {

@@ -75,7 +75,7 @@
       </aside>
 
       <main class="main-content">
-        <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button><div class="breadcrumb"><span>Workspace</span><span>/</span><strong id="breadcrumbCurrent">Overview</strong></div><div class="topbar-actions"><button class="icon-button" aria-label="Search">⌕</button><button class="icon-button notification" aria-label="Notifications">♧<i></i></button><button class="top-avatar avatar avatar-purple" id="topAvatar">PV</button></div></header>
+        <header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button><div class="breadcrumb"><span>Workspace</span><span>/</span><strong id="breadcrumbCurrent">Overview</strong></div><div class="topbar-actions"><button class="icon-button" id="topSearchBtn" aria-label="Search">⌕</button><button class="icon-button notification" id="topNotifBtn" aria-label="Notifications">♧<i id="notifBtnDot"></i></button><button class="top-avatar avatar avatar-purple" id="topAvatar">PV</button></div></header>
         <div class="page-wrap">
           <section class="view active-view" id="overviewView">
             <div class="welcome-row"><div><p class="eyebrow">MONDAY, 14 OCTOBER 2024</p><h1>Good morning, <span id="welcomeName">Priya</span> <span class="wave">👋</span></h1><p class="subtitle">Here’s what’s happening with your surplus today.</p></div><button class="primary-button" id="addListingBtn"><span>＋</span> Add food listing</button></div>
@@ -156,7 +156,13 @@
     </div>
 
     <div class="toast" id="toast"><span>✓</span><span id="toastMessage">Listing published</span></div>
-    <script src="config.js?v=13"></script>
-    <script src="app.js?v=13"></script>
+    <!-- Global search overlay (⌕) -->
+    <div class="modal-backdrop" id="searchBackdrop"><div class="search-sheet" role="dialog" aria-modal="true" aria-label="Global search"><div class="search-sheet-head"><span class="search-sheet-icon">⌕</span><input id="globalSearchInput" placeholder="Search food listings, requests, pickups, partners…" autocomplete="off" /><button class="search-sheet-close" id="searchClose" aria-label="Close search">✕</button></div><div class="search-results" id="globalSearchResults"><p class="search-empty">Start typing to search across your workspace.</p></div><div class="search-foot"><span>↵ jumps to the top result</span><span id="searchResultCount"></span></div></div></div>
+    <!-- Notifications dropdown (♧) -->
+    <div class="top-dropdown" id="notifPanel"><div class="notif-head"><strong>Notifications</strong><span class="notif-pill" id="notifCount">0</span></div><div class="notif-list" id="notifList"></div><div class="notif-foot"><span id="notifTimestamp">—</span><button class="text-button" id="notifViewAll">View all activity →</button></div></div>
+    <!-- Top profile menu (avatar) -->
+    <div class="top-dropdown top-menu" id="topMenu"><div class="top-menu-id"><strong id="topMenuName">—</strong><small id="topMenuEmail">—</small></div><button data-topaction="settings">⚙ Settings</button><button data-topaction="help"><span class="help-icon-mini">?</span>Help</button><button data-topaction="logout">↩ Log out</button></div>
+    <script src="config.js?v=14"></script>
+    <script src="app.js?v=14"></script>
   </body>
 </html>

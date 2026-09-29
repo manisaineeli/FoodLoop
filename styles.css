@@ -211,3 +211,51 @@
 .pickup-board{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
 @media(max-width:900px){.pickup-board{grid-template-columns:1fr}}
 @media(max-width:720px){.filter-row{flex-direction:column;align-items:stretch}.search-box{width:100%}}
+
+/* ===== Topbar: global search · notifications · profile menu ===== */
+.search-sheet{background:#fff;width:min(620px,100%);border-radius:17px;box-shadow:0 25px 80px #19352d33;overflow:hidden}
+.search-sheet-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.search-sheet-icon{font-size:20px;color:#9aaca5}
+.search-sheet-head input{border:0;outline:0;flex:1;font:500 14px 'DM Sans';color:var(--ink)}
+.search-sheet-close{border:0;background:transparent;color:#9aaca5;cursor:pointer;font-size:15px}
+.search-results{max-height:340px;overflow-y:auto;padding:8px 10px}
+.search-group{font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:1px;color:#a4b7b0;margin:10px 12px 6px;display:flex;justify-content:space-between}
+.search-group span{background:#eef3f0;color:#5f796e;border-radius:8px;padding:1px 7px;font-size:9px}
+.search-result{display:flex;align-items:center;gap:11px;width:100%;border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;cursor:pointer}
+.search-result:hover{background:#f2f8f4}
+.result-tag{font:700 8px 'DM Sans';letter-spacing:.6px;text-transform:uppercase;background:#eef3f0;color:#5f796e;border-radius:6px;padding:3px 6px;flex-shrink:0}
+.result-tag.accepted,.result-tag.available{background:#e8f8ee;color:#278956}
+.result-tag.declined{background:#fdeceb;color:#c15a4f}
+.result-tag.reserved{background:#fff0df;color:#d8862c}
+.result-main{min-width:0;flex:1}
+.result-main strong{display:block;font:700 12px 'DM Sans';color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-main small{display:block;color:#8ba098;font-size:10px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-go{color:#9aaca5;font-size:13px}
+.search-empty{color:#8ba098;font-size:12px;padding:22px 14px;margin:0}
+.search-foot{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;border-top:1px solid var(--line);color:#9aaca5;font-size:10px}
+.top-dropdown{display:none;position:fixed;right:16px;top:64px;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 15px 40px rgba(33,74,57,.16);width:min(340px,calc(100vw - 28px));z-index:40;overflow:hidden}
+.top-dropdown.open{display:block}
+.notif-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.notif-head strong{font:700 13px Manrope;color:var(--ink)}
+.notif-pill{background:#eaf8f0;color:#258653;font:700 10px 'DM Sans';border-radius:9px;padding:2px 8px}
+.notif-list{max-height:320px;overflow-y:auto}
+.notif-item{display:flex;gap:11px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.notif-item:last-child{border-bottom:0}
+.notif-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.notif-icon.green-bg{background:#e8f8ee;color:#278956}
+.notif-icon.blue-bg{background:#eaf2fd;color:#3a72c4}
+.notif-icon.orange-bg{background:#fff0df;color:#d8862c}
+.notif-icon.purple-bg{background:#f1eafa;color:#7655a5}
+.notif-item strong{display:block;font:700 11px 'DM Sans';color:var(--ink)}
+.notif-item p{margin:3px 0 0;color:#5f796e;font-size:10px}
+.notif-item small{color:#9aaca5;font-size:9px}
+.notif-empty{color:#8ba098;font-size:11px;padding:22px;margin:0;text-align:center}
+.notif-foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid var(--line);color:#9aaca5;font-size:10px}
+.top-menu{width:min(230px,calc(100vw - 28px));padding:8px}
+.top-menu-id{padding:10px 12px 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.top-menu-id strong{display:block;font:700 12px 'DM Sans';color:var(--ink)}
+.top-menu-id small{display:block;color:#8ba098;font-size:10px;margin-top:3px;word-break:break-all}
+.top-menu button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:8px;font:600 11px 'DM Sans';color:#426056;cursor:pointer}
+.top-menu button:hover{background:#f2f8f4;color:var(--green-dark)}
+.help-icon-mini{width:18px;height:18px;border-radius:6px;background:#dff1e6;color:var(--green-dark);display:grid;place-items:center;font-weight:800;font-size:10px}
+@media(max-width:720px){.search-sheet{width:100%;margin:10px}.modal-backdrop{padding:10px}}
