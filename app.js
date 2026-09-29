@@ -54,6 +54,8 @@ async function loadData() {
     renderPartners();
     renderWasteTable();
     renderActivityList();
+    const nb = document.getElementById('notifBadge');
+    if (nb) nb.textContent = db.activities.length > 99 ? '99+' : db.activities.length;
     renderMetrics();
     renderNavCounts();
     renderScenePhotos();
@@ -528,11 +530,31 @@ $$('.settings-toggle input').forEach((input) => {
 // ===================== Topbar: Search · Notifications · Profile =====================
 
 // Search across the live MongoDB mirror and jump to the matching view.
+let searchIndex = -1;
+
+function viewSuggestions() {
+  return [
+    { label: 'Overview', icon: '◈', view: 'overview' },
+    { label: 'Food listings', icon: '▣', view: 'listings' },
+    { label: 'Requests', icon: '↔', view: 'requests' },
+    { label: 'Pickups', icon: '⌁', view: 'pickups' },
+    { label: 'Waste log', icon: '◒', view: 'waste' },
+    { label: 'Partners', icon: '♧', view: 'partners' },
+    { label: 'Reports', icon: '▥', view: 'reports' },
+    { label: 'Settings', icon: '⚙', view: 'settings' }
+  ];
+}
+
+function renderSearchSuggestions() {
+  $('#searchSuggestions').innerHTML = `<p class="cmd-label">Quick access</p><div class="cmd-chips">${viewSuggestions().map((v) => `<button class="cmd-chip" data-view="${v.view}"><span>${v.icon}</span>${v.label}</button>`).join('')}</div>`;
+}
+
 function runGlobalSearch() {
   const q = ($('#globalSearchInput').value || '').trim().toLowerCase();
   const box = $('#globalSearchResults');
+  searchIndex = -1;
   if (!q) {
-    box.innerHTML = '<p class="search-empty">Start typing to search across your workspace.</p>';
+    box.innerHTML = '<p class="cmd-empty"><span class="cmd-empty-icon">⌕</span>Type to search your live workspace data.</p>';
     $('#searchResultCount').textContent = '';
     return;
   }
@@ -543,21 +565,38 @@ function runGlobalSearch() {
     { label: 'Partners', view: 'partners', items: db.partners.filter((p) => (p.name + ' ' + (p.detail || '')).toLowerCase().includes(q)).map((p) => ({ title: p.name, sub: p.detail, status: p.status })) }
   ];
   const total = groups.reduce((n, g) => n + g.items.length, 0);
-  $('#searchResultCount').textContent = total ? `${total} result${total === 1 ? '' : 's'}` : 'No results';
+  $('#searchResultCount').textContent = total ? `${total} ${total === 1 ? 'result' : 'results'}` : 'No results';
   const html = [];
   groups.forEach((g) => {
     if (!g.items.length) return;
-    html.push(`<p class="search-group">${g.label}<span>${g.items.length}</span></p>`);
-    g.items.slice(0, 4).forEach((it) => html.push(`<button class="search-result" data-view="${g.view}"><span class="result-tag ${(it.status || '').toLowerCase()}">${it.status || g.label.replace('s', '').slice(0, 1)}</span><span class="result-main"><strong>${it.title}</strong><small>${it.sub || ''}</small></span><span class="result-go">→</span></button>`));
+    html.push(`<p class="cmd-label">${g.label}<span>${g.items.length}</span></p>`);
+    g.items.slice(0, 5).forEach((it) => html.push(`<button class="cmd-row" data-view="${g.view}"><span class="cmd-tag ${(it.status || '').toLowerCase()}">${it.status || g.label.replace(/s$/i, '').slice(0, 5)}</span><span class="cmd-row-main"><strong>${it.title}</strong><small>${it.sub || ''}</small></span><span class="cmd-arrow">→</span></button>`));
   });
-  box.innerHTML = html.join('') || `<p class="search-empty">Nothing matches “${q}” — try another keyword.</p>`;
+  box.innerHTML = html.join('') || `<p class="cmd-empty"><span class="cmd-empty-icon">∅</span>No matches for “${q}”.</p>`;
+}
+
+function navigateSearch(delta) {
+  const items = [...$('#globalSearchResults').querySelectorAll('.cmd-row')];
+  if (!items.length) return;
+  searchIndex = (searchIndex + delta + items.length) % items.length;
+  items.forEach((el, i) => el.classList.toggle('cmd-active', i === searchIndex));
+  const active = items[searchIndex];
+  if (active) active.scrollIntoView({ block: 'nearest' });
+}
+
+function enterSearch() {
+  const active = $('#globalSearchResults .cmd-row.cmd-active');
+  if (active) { showView(active.dataset.view); closeSearch(); return; }
+  const first = $('#globalSearchResults .cmd-row');
+  if (first) first.click();
 }
 
 function openSearch() {
   $('#searchBackdrop').classList.add('open');
   $('#globalSearchInput').value = '';
   runGlobalSearch();
-  window.setTimeout(() => $('#globalSearchInput').focus(), 30);
+  renderSearchSuggestions();
+  window.setTimeout(() => $('#globalSearchInput').focus(), 40);
 }
 function closeSearch() { $('#searchBackdrop').classList.remove('open'); }
 
@@ -565,6 +604,7 @@ function renderNotifications() {
   const list = db.activities.slice(0, 6);
   $('#notifList').innerHTML = list.map((a) => `<div class="notif-item"><span class="notif-icon ${a.iconClass || 'green-bg'}">${a.icon || '•'}</span><div><strong>${a.title}</strong><p>${a.description}</p><small>${a.time}</small></div></div>`).join('') || '<p class="notif-empty">No notifications yet.</p>';
   $('#notifCount').textContent = db.activities.length;
+  $('#notifBadge').textContent = db.activities.length > 99 ? '99+' : db.activities.length;
   $('#notifTimestamp').textContent = list.length ? 'Latest activity' : '—';
 }
 
@@ -575,11 +615,21 @@ $('#topSearchBtn').addEventListener('click', openSearch);
 $('#searchClose').addEventListener('click', closeSearch);
 $('#searchBackdrop').addEventListener('click', (e) => { if (e.target.id === 'searchBackdrop') closeSearch(); });
 $('#globalSearchInput').addEventListener('input', runGlobalSearch);
-$('#globalSearchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const first = $('#globalSearchResults .search-result'); if (first) first.click(); } });
+$('#globalSearchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); navigateSearch(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); navigateSearch(-1); }
+  else if (e.key === 'Enter') { e.preventDefault(); enterSearch(); }
+});
 $('#globalSearchResults').addEventListener('click', (e) => {
-  const btn = e.target.closest('.search-result');
+  const btn = e.target.closest('.cmd-row');
   if (!btn) return;
   showView(btn.dataset.view);
+  closeSearch();
+});
+$('#searchSuggestions').addEventListener('click', (e) => {
+  const chip = e.target.closest('.cmd-chip');
+  if (!chip) return;
+  showView(chip.dataset.view);
   closeSearch();
 });
 
