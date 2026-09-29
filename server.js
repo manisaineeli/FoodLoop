@@ -183,15 +183,28 @@ async function resolveFoodImage(name) {
   const last = words[words.length - 1];
   const first = words[0];
 
+  // Pick the first dish photo from a search result that actually loads
+  // (prevents storing dead image URLs that never display).
+  async function firstWorkingMeal(meals) {
+    if (!meals) return null;
+    for (const meal of meals.slice(0, 3)) {
+      if (!meal.strMealThumb) continue;
+      try {
+        const res = await fetch(meal.strMealThumb, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
+        if (res.ok) return meal.strMealThumb;
+      } catch (err) { /* try next meal */ }
+    }
+    return null;
+  }
+
   // 1) Dish photo from TheMealDB — full keyword first (e.g. "biryani"),
   //    then the last word (handles "Chicken Biryani" → biryani).
   try {
-    const full = await mealDbSearch(kw);
-    if (full) return full[0].strMealThumb;
-    if (words.length > 1 && last) {
-      const byLast = await mealDbSearch(last);
-      if (byLast) return byLast[0].strMealThumb;
+    let img = await firstWorkingMeal(await mealDbSearch(kw));
+    if (!img && words.length > 1 && last) {
+      img = await firstWorkingMeal(await mealDbSearch(last));
     }
+    if (img) return img;
   } catch (err) { /* fall through */ }
 
   // 2) Known ingredient photo (mangoes → Mango.png, etc.).

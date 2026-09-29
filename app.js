@@ -51,10 +51,29 @@ async function loadData() {
     renderActivityList();
     renderMetrics();
     renderNavCounts();
+    renderScenePhotos();
     if (auth.currentUser?.role === 'ngo') renderNgoGrid();
   } catch (err) {
     showToast(backendHint());
   }
+}
+
+// Render a food photo with a graceful emoji fallback if the image is missing
+// or fails to load — a broken photo never leaves a blank tile.
+function foodPhotoHtml(item, cls) {
+  const fallback = `<span class="food-photo-fallback">${item.emoji || '🍽️'}</span>`;
+  if (!item.image) return fallback;
+  const lazy = cls.includes('thumb') ? '' : ' loading="lazy"';
+  return `${fallback}<img class="${cls}" src="${item.image}" alt="${item.name}"${lazy} onerror="this.remove()">`;
+}
+
+// Overview hero — real photos of the latest listings instead of a 3D animation.
+function renderScenePhotos() {
+  const el = $('#scenePhotos');
+  if (!el) return;
+  const items = db.listings.slice(0, 3);
+  el.innerHTML = items.map((item) => `
+    <figure class="scene-photo">${foodPhotoHtml(item, 'scene-photo-img')}<figcaption><strong>${item.name}</strong><small>${item.quantity}</small></figcaption></figure>`).join('') || '<span class="food-photo-fallback">🍽️</span>';
 }
 
 // Live counts for the sidebar (Food listings, Requests) from MongoDB.
@@ -229,7 +248,7 @@ function renderNgoGrid() {
   $('#ngoGrid').innerHTML = available.map((item) => {
     const isRequested = requested.has(item.name);
     return `<article class="ngo-card">
-      <div class="ngo-card-photo">${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy">` : `<span class="big-food">${item.emoji}</span>`}${item.status ? `<span class="status available">${item.status}</span>` : ''}</div>
+      <div class="ngo-card-photo">${foodPhotoHtml(item, 'ngo-photo-img')}${item.status ? `<span class="status available">${item.status}</span>` : ''}</div>
       <h3>${item.name}</h3>
       <p class="ngo-detail">${item.detail}</p>
       <div class="ngo-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div>
@@ -326,7 +345,7 @@ $('#ngoGrid').addEventListener('click', async (e) => {
 
 // ===================== Views =====================
 
-const viewNames = { overview: 'Overview', listings: 'Food listings', requests: 'Requests', pickups: 'Pickups', waste: 'Waste log', partners: 'Partners', reports: 'Reports', docs: 'Project documentation', settings: 'Settings' };
+const viewNames = { overview: 'Overview', listings: 'Food listings', requests: 'Requests', pickups: 'Pickups', waste: 'Waste log', partners: 'Partners', reports: 'Reports', docs: 'About FoodLoop', settings: 'Settings' };
 
 function showView(view) {
   $$('.view').forEach((el) => el.classList.remove('active-view'));
@@ -351,9 +370,9 @@ function showToast(message) {
 
 function renderListingCards() {
   const search = ($('#listingSearch')?.value || '').toLowerCase();
-  $('#listingCards').innerHTML = db.listings.filter((item) => item.name.toLowerCase().includes(search)).map((item) => `<article class="listing-card"><div class="listing-card-photo">${item.image ? `<img src="${item.image}" alt="${item.name}" loading="lazy">` : `<span class="big-food">${item.emoji}</span>`}</div><div class="listing-card-head"><div><h3>${item.name}</h3><p>${item.detail}</p></div><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></div><div class="listing-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div></article>`).join('') || '<div class="empty-state">No listings found.</div>';
+  $('#listingCards').innerHTML = db.listings.filter((item) => item.name.toLowerCase().includes(search)).map((item) => `<article class="listing-card"><div class="listing-card-photo">${foodPhotoHtml(item, 'listing-photo-img')}</div><div class="listing-card-head"><div><h3>${item.name}</h3><p>${item.detail}</p></div><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></div><div class="listing-meta"><span>${item.quantity}</span><span>⌁ ${item.expiry}</span></div></article>`).join('') || '<div class="empty-state">No listings found.</div>';
 
-  $('#listingRows').innerHTML = db.listings.map((item) => `<tr><td><div class="food-cell">${item.image ? `<img class="food-thumb" src="${item.image}" alt="${item.name}" loading="lazy">` : `<span class="food-emoji">${item.emoji}</span>`}<div><strong>${item.name}</strong><small>${item.detail}</small></div></div></td><td>${item.quantity}</td><td>${item.expiry}</td><td><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></td><td>${item.requests}</td><td><button class="row-menu">•••</button></td></tr>`).join('');
+  $('#listingRows').innerHTML = db.listings.map((item) => `<tr><td><div class="food-cell"><div class="food-thumb-wrap">${foodPhotoHtml(item, 'food-thumb')}</div><div><strong>${item.name}</strong><small>${item.detail}</small></div></div></td><td>${item.quantity}</td><td>${item.expiry}</td><td><span class="status ${item.status === 'Available' ? 'available' : 'reserved'}">${item.status}</span></td><td>${item.requests}</td><td><button class="row-menu">•••</button></td></tr>`).join('');
 }
 
 function renderRequests() {

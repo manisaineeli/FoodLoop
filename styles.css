@@ -134,3 +134,28 @@
 .profile-menu.open{display:block}
 .profile-menu button{display:block;width:100%;border:0;background:transparent;padding:11px 14px;text-align:left;font:600 12px 'DM Sans';color:#426056;cursor:pointer}
 .profile-menu button:hover{background:#f2f8f4;color:var(--green-dark)}
+
+/* ===== Overview hero � real food photos replace the 3D animation ===== */
+.scene-center,.scene-arrow{display:none}
+.scene-photos{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:12px;z-index:5}
+.scene-photo{position:relative;width:126px;height:118px;border-radius:12px;overflow:hidden;background:#eaf6ef;border:1px solid rgba(183,230,201,.7);box-shadow:0 12px 26px rgba(6,29,20,.22)}
+.scene-photo .scene-photo-img{width:100%;height:86px;object-fit:cover;display:block;position:relative;z-index:1}
+.scene-photo figcaption{padding:6px 9px 7px;background:#fff}
+.scene-photo figcaption strong{display:block;font-size:9px;color:#1d4a37;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scene-photo figcaption small{color:#7d9b8d;font-size:8px}
+.scene-photo .food-photo-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:34px;background:#eaf6ef}
+.scene-photo .food-photo-fallback:not(:first-child){z-index:0}
+@media(max-width:1180px){.scene-photos{gap:9px}.scene-photo{width:104px;height:104px}.scene-photo .scene-photo-img{height:74px}}
+
+/* ===== Broken-image fallback tiles (emoji shows if photo cannot load) ===== */
+.listing-card-photo,.ngo-card-photo{position:relative}
+.listing-card-photo .food-photo-fallback,.ngo-card-photo .food-photo-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:46px;background:#eef6f1;z-index:0}
+.listing-card-photo img.listing-photo-img,.ngo-card-photo img.ngo-photo-img{position:relative;z-index:1}
+.ngo-card-photo .status{z-index:2}
+.food-thumb-wrap{position:relative;width:44px;height:44px;flex-shrink:0;border-radius:9px;overflow:hidden;background:#eef6f1}
+.food-thumb-wrap .food-photo-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:20px;z-index:0}
+.food-thumb-wrap img.food-thumb{width:44px;height:44px;border-radius:9px;object-fit:cover;border:1px solid var(--line);position:relative;z-index:1;background:#eef6f1}
+
+/* ===== Sidebar bottom grouping ===== */
+.sidebar-bottom .nav-item-bottom{margin-top:2px}
+.sidebar-bottom .nav-item.logout-btn{border-top:1px solid var(--line);padding-top:9px;margin-top:5px}
