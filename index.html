@@ -71,7 +71,7 @@
           <button class="nav-item" data-view="partners"><span>♧</span>Partners</button>
           <button class="nav-item" data-view="reports"><span>▥</span>Reports</button>
         </nav>
-        <div class="sidebar-bottom"><button class="nav-item nav-item-bottom" data-view="docs"><span>▤</span>About FoodLoop</button><button class="nav-item logout-btn" id="logoutBtn"><span>↩</span>Log out</button><button class="nav-item nav-item-bottom" data-view="settings"><span>⚙</span>Settings</button><button class="help-card" id="helpBtn"><span class="help-icon">?</span><div><strong>Need a hand?</strong><small>Visit our help center</small></div><span>→</span></button><div class="profile"><span class="avatar avatar-purple" id="profileAvatar">PV</span><span><strong id="profileName">Priya Varma</strong><small id="profileRole">Admin</small></span><button aria-label="Profile menu" id="profileMenuBtn">•••</button><div class="profile-menu" id="profileMenu"><button data-action="logout">↩ Log out</button></div></div></div>
+        <div class="sidebar-bottom"><button class="nav-item nav-item-bottom" data-view="docs"><span>▤</span>About FoodLoop</button><button class="nav-item nav-item-bottom" data-view="settings"><span>⚙</span>Settings</button><button class="help-card" id="helpBtn"><span class="help-icon">?</span><div><strong>Need a hand?</strong><small>Visit our help center</small></div><span>→</span></button><div class="profile"><span class="avatar avatar-purple" id="profileAvatar">PV</span><span><strong id="profileName">Priya Varma</strong><small id="profileRole">Admin</small></span><button aria-label="Profile menu" id="profileMenuBtn">•••</button><div class="profile-menu" id="profileMenu"><button data-action="logout">↩ Log out</button></div></div></div>
       </aside>
 
       <main class="main-content">
@@ -115,13 +115,15 @@
               <article class="panel uml-card"><div class="panel-heading"><div><h2>High-Level Sequence</h2><p>Interaction between components</p></div></div><img class="uml-img" src="diagrams/high-level-sequence.png" alt="High-level sequence diagram showing user, frontend, backend, database and notification service" loading="lazy"><p class="doc-text doc-muted">Shows the overall interaction between major system components, such as the user, frontend, backend, database, and notification service.</p></article>
             </div>
           </section>
-          <section class="view" id="settingsView"><div class="view-heading"><div><p class="eyebrow">WORKSPACE</p><h1>Settings</h1><p class="subtitle">Your profile, connection and preferences.</p></div></div>
+          <section class="view" id="settingsView"><div class="view-heading"><div><p class="eyebrow">WORKSPACE</p><h1>Settings</h1><p class="subtitle">Manage your account, notifications and workspace connection.</p></div></div>
+            <div class="settings-hero"><span class="avatar avatar-purple settings-hero-avatar" id="settingsAvatar">PV</span><div class="settings-hero-id"><strong id="settingsName">Priya Varma</strong><small id="settingsEmail">priya@foodloop.app</small></div><span class="settings-role" id="settingsRole">Admin</span></div>
             <div class="settings-grid">
-              <article class="panel settings-card"><div class="panel-heading"><div><h2>Your profile</h2><p>Account details for this workspace</p></div></div><div class="settings-profile"><span class="avatar avatar-purple" id="settingsAvatar">PV</span><div><strong id="settingsName">Priya Varma</strong><small id="settingsEmail">priya@foodloop.app</small></div><span class="settings-role" id="settingsRole">Admin</span></div><p class="settings-note">Signed in through the FoodLoop API. Your password is stored safely (hashed) in the MongoDB foodloop database.</p></article>
+              <article class="panel settings-card"><div class="panel-heading"><div><h2>Account</h2><p>Your profile in this workspace</p></div></div><div class="settings-rows"><div class="settings-row"><span>Name</span><strong id="settingsName2">—</strong></div><div class="settings-row"><span>Email</span><strong id="settingsEmail2">—</strong></div><div class="settings-row"><span>Role</span><strong id="settingsRole2">—</strong></div><div class="settings-row"><span>Member since</span><strong id="settingsJoined">—</strong></div><div class="settings-row"><span>Authentication</span><strong>Password · stored hashed in MongoDB</strong></div></div></article>
               <article class="panel settings-card"><div class="panel-heading"><div><h2>Connection</h2><p>Where your data lives</p></div></div><ul class="settings-list"><li><span>API server</span><code id="settingsApi">—</code></li><li><span>Database</span><code>mongodb://localhost:27017/foodloop</code></li><li><span>Collections</span><code>users · listings · requests · pickups · partners · waste · activity · metrics</code></li></ul></article>
               <article class="panel settings-card"><div class="panel-heading"><div><h2>Notifications</h2><p>What you want to hear about</p></div></div><label class="settings-toggle"><span>New donation requests</span><input type="checkbox" id="setNotifRequests" checked><i></i></label><label class="settings-toggle"><span>Pickup reminders</span><input type="checkbox" id="setNotifPickups" checked><i></i></label><label class="settings-toggle"><span>Waste log alerts</span><input type="checkbox" id="setNotifWaste" checked><i></i></label></article>
-              <article class="panel settings-card"><div class="panel-heading"><div><h2>About</h2><p>Food Waste Reduction Platform</p></div></div><p class="settings-note">Built as an OOAD project (UML) — a centralized platform that connects food providers with NGOs and food banks so surplus food is redistributed instead of wasted. Uses Node.js + Express + MongoDB with a live dashboard.</p><button class="secondary-button" data-open-docs>Open About FoodLoop <span>→</span></button></article>
+              <article class="panel settings-card"><div class="panel-heading"><div><h2>About FoodLoop</h2><p>Food Waste Reduction Platform</p></div></div><p class="settings-note">Built as an OOAD project (UML) — a centralized platform that connects food providers with NGOs and food banks so surplus food is redistributed instead of wasted. Uses Node.js + Express + MongoDB with a live dashboard.</p><button class="secondary-button" data-open-docs>Open About FoodLoop <span>→</span></button></article>
             </div>
+            <div class="settings-session"><div><h2>Session</h2><p>Sign out of this workspace on this device</p></div><button class="primary-button settings-logout" id="settingsLogout">↩ Log out</button></div>
           </section>
         </div>
       </main>
@@ -154,7 +156,7 @@
     </div>
 
     <div class="toast" id="toast"><span>✓</span><span id="toastMessage">Listing published</span></div>
-    <script src="config.js?v=7"></script>
-    <script src="app.js?v=7"></script>
+    <script src="config.js?v=8"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>

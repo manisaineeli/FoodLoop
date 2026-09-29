@@ -228,6 +228,11 @@ function renderProfile() {
   set('settingsAvatar', initials);
   set('settingsRole', roleLabel);
   set('settingsApi', API_URL.replace(/\/api$/, ''));
+  set('settingsName2', displayName);
+  set('settingsEmail2', user.email);
+  set('settingsRole2', roleLabel);
+  const joined = user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+  set('settingsJoined', joined);
 }
 
 // ===================== NGO Dashboard =====================
@@ -440,8 +445,8 @@ $('#helpClose').addEventListener('click', () => $('#helpBackdrop').classList.rem
 $('#helpDone').addEventListener('click', () => $('#helpBackdrop').classList.remove('open'));
 $('#helpBackdrop').addEventListener('click', (event) => { if (event.target.id === 'helpBackdrop') $('#helpBackdrop').classList.remove('open'); });
 
-// Log out — bottom button and profile ••• menu
-$('#logoutBtn').addEventListener('click', () => auth.logout());
+// Log out — Settings page button and profile ••• menu
+$('#settingsLogout').addEventListener('click', () => auth.logout());
 $('#profileMenuBtn').addEventListener('click', (e) => { e.stopPropagation(); $('#profileMenu').classList.toggle('open'); });
 document.addEventListener('click', () => { if ($('#profileMenu')) $('#profileMenu').classList.remove('open'); });
 $('#profileMenu').addEventListener('click', (e) => {
