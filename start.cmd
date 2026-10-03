@@ -36,6 +36,9 @@ if not errorlevel 1 (
     echo        Installing dependencies for the first time...
     call npm install
   )
+  rem Start-Process fails outright if the redirect folder is missing,
+  rem so it has to exist before the server is launched.
+  if not exist "%USERPROFILE%\.foodloop" mkdir "%USERPROFILE%\.foodloop"
   if exist "%USERPROFILE%\.foodloop\foodloop.log" (
     rem keep a small history, then overwrite the newest log
     type "%USERPROFILE%\.foodloop\foodloop.log" >> "%USERPROFILE%\.foodloop\foodloop-prev.log" 2>nul

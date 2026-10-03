@@ -13,27 +13,60 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = 'foodloop_secret_key_change_in_production';
+
+// Provide JWT_SECRET in the environment when deploying. The fallback keeps
+// local development working without any setup.
+const JWT_SECRET = process.env.JWT_SECRET || 'foodloop_secret_key_change_in_production';
 
 // ALL FoodLoop data lives in this database.
+// Local: mongodb://127.0.0.1:27017/foodloop  (from .env)
+// Hosted: set MONGODB_URI to a MongoDB Atlas connection string.
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/foodloop';
 
 function describeUri(uri) {
   return uri.replace(/\/\/([^@/]+)@/, '//***@');
 }
 
-mongoose.connect(MONGODB_URI)
-  .then(() => {
+// Connect with a bounded timeout, then keep retrying in the background.
+// On a free-tier host the database can take a while to accept connections, so
+// retrying beats letting the whole process die on the first failure.
+let dbReady = false;
+
+async function connectMongo(attempt = 1) {
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000
+    });
+    dbReady = true;
     console.log('Connected to MongoDB:', describeUri(MONGODB_URI));
-    return seedDatabaseIfEmpty().then(() => backfillListingImages());
-  })
-  .catch(err => {
+    await seedDatabaseIfEmpty();
+    await backfillListingImages();
+  } catch (err) {
+    dbReady = false;
     console.error('MongoDB connection error:', err.message);
-    console.log('');
-    console.log('The app reads MONGODB_URI from .env in this folder.');
-    console.log('Local MongoDB should already be listening on 127.0.0.1:27017.');
-    console.log('Start the Windows service named MongoDB, then run: npm start');
-  });
+    if (attempt === 1) {
+      console.log('');
+      console.log('The app reads MONGODB_URI from .env in this folder.');
+      console.log('Local MongoDB should already be listening on 127.0.0.1:27017.');
+      console.log('Start the Windows service named MongoDB, then run: npm start');
+    }
+    const delay = Math.min(attempt * 2000, 15000);
+    console.log(`Retrying MongoDB connection in ${delay / 1000}s (attempt ${attempt + 1})...`);
+    setTimeout(() => connectMongo(attempt + 1), delay);
+  }
+}
+
+mongoose.connection.on('disconnected', () => {
+  if (dbReady) console.warn('Lost MongoDB connection — waiting to reconnect.');
+  dbReady = false;
+});
+mongoose.connection.on('reconnected', () => {
+  console.log('Reconnected to MongoDB.');
+  dbReady = true;
+});
+
+connectMongo();
 
 // ===================== Schemas =====================
 
@@ -303,7 +336,31 @@ async function seedDatabaseIfEmpty() {
 
 app.use(cors());
 app.use(express.json());
+
+// When THIS server hosts the page, the frontend and the API share one origin,
+// so a relative URL is always correct. This avoids CORS entirely and cannot
+// trip the browser's mixed-content rule on an HTTPS host.
+// Registered before express.static so it wins over the config.js on disk.
+app.get('/config.js', (req, res) => {
+  res.type('application/javascript').send(
+    "window.FOODLOOP_API = window.FOODLOOP_API || '/api';\n"
+  );
+});
+
 app.use(express.static(__dirname));
+
+// Host health check. Never touches the database, so it reports "up" as soon as
+// the process is serving HTTP.
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', database: dbReady ? 'connected' : 'connecting' });
+});
+
+// Answer with a clear message instead of letting requests hang for 30s when the
+// database is still down.
+app.use('/api', (req, res, next) => {
+  if (dbReady) return next();
+  res.status(503).json({ error: 'Database is not connected yet. Please retry in a moment.' });
+});
 
 const toClient = (doc) => ({ ...doc.toObject(), id: doc._id.toString() });
 

@@ -1,0 +1,25 @@
+# Render blueprint for FoodLoop.
+#
+# Deploy with:  https://render.com/deploy?repo=https://github.com/manisaineeli/FoodLoop
+#
+# The blueprint creates ONE web service that serves both the frontend and the
+# API, so the app lives on a single origin. Before deploying, create a free
+# MongoDB Atlas cluster and paste its connection string into MONGODB_URI.
+services:
+  - type: web
+    name: foodloop
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    # Same-origin browser requests need no extra CORS origins (cors() is open),
+    # so there is nothing to configure here beyond the two secrets below.
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      # Paste as: mongodb+srv://<user>:<password>@<cluster>.mongodb.net/foodloop?retryWrites=true&w=majority
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
