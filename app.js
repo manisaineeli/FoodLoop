@@ -62,8 +62,27 @@ const defaultSeedData = {
   }
 };
 
+// Load persistent database from localStorage if present (for GitHub Pages & standalone),
+// or use high-fidelity default seed data.
+function loadInitialDb() {
+  const saved = localStorage.getItem('foodloop_db');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.listings && parsed.listings.length) return parsed;
+    } catch (e) { /* fall back */ }
+  }
+  return JSON.parse(JSON.stringify(defaultSeedData));
+}
+
+function persistDb() {
+  try {
+    localStorage.setItem('foodloop_db', JSON.stringify(db));
+  } catch (e) { /* quota exceeded safeguard */ }
+}
+
 // Local mirror of collections
-const db = JSON.parse(JSON.stringify(defaultSeedData));
+const db = loadInitialDb();
 
 // Active toolbar filters
 let requestsFilter = 'all';
@@ -71,6 +90,12 @@ let pickupsFilter = 'all';
 let partnersFilter = 'all';
 
 async function api(path, options = {}) {
+  // If explicitly in autonomous mode (e.g. GitHub Pages without separate backend),
+  // skip trying to fetch http://localhost which browsers block on HTTPS.
+  if (API_URL === 'autonomous') {
+    throw new Error('autonomous_mode');
+  }
+
   let res;
   try {
     res = await fetch(API_URL + path, {
@@ -89,6 +114,12 @@ async function api(path, options = {}) {
 async function loadData() {
   const chip = document.getElementById('authStatusChip');
   const chipText = document.getElementById('authStatusText');
+
+  if (API_URL === 'autonomous') {
+    if (chipText) chipText.textContent = '⚡ GitHub Live Mode Active';
+    renderAllViews();
+    return;
+  }
 
   try {
     const data = await api('/bootstrap');
@@ -187,6 +218,7 @@ async function addListing({ emoji, name, detail, quantity, expiry }) {
       body: JSON.stringify({ emoji, name, detail, quantity, expiry })
     });
     db.listings = [listing, ...db.listings];
+    persistDb();
     return listing;
   } catch (err) {
     // Offline local simulation
@@ -202,6 +234,7 @@ async function addListing({ emoji, name, detail, quantity, expiry }) {
       image: 'https://www.themealdb.com/images/ingredients/' + encodeURIComponent(name.split(' ')[0] || 'Meal') + '.png'
     };
     db.listings = [newL, ...db.listings];
+    persistDb();
     return newL;
   }
 }
@@ -214,6 +247,7 @@ async function requestFood(foodName, ngoName) {
     });
     db.requests = [request, ...db.requests];
     db.ngoRequests.push({ foodName });
+    persistDb();
     return request;
   } catch (err) {
     const newR = {
@@ -227,6 +261,7 @@ async function requestFood(foodName, ngoName) {
     };
     db.requests = [newR, ...db.requests];
     db.ngoRequests.push({ foodName });
+    persistDb();
     return newR;
   }
 }
@@ -238,10 +273,12 @@ async function updateRequest(id, action) {
       body: JSON.stringify({ action })
     });
     db.requests = db.requests.map(r => (r.id === id ? request : r));
+    persistDb();
     return request;
   } catch (err) {
     const req = db.requests.find(r => r.id === id);
     if (req) req.status = action === 'accept' ? 'accepted' : 'declined';
+    persistDb();
     return req || { name: 'Partner', status: action };
   }
 }
@@ -253,8 +290,10 @@ async function addWaste(entry) {
       body: JSON.stringify(entry)
     });
     db.waste = [waste, ...db.waste];
+    persistDb();
   } catch (err) {
     db.waste = [{ ...entry, date: new Date().toLocaleDateString('en-GB') }, ...db.waste];
+    persistDb();
   }
 }
 
@@ -265,8 +304,10 @@ async function addPickup(p) {
       body: JSON.stringify(p)
     });
     db.pickups.push(pickup);
+    persistDb();
   } catch (err) {
     db.pickups.push({ ...p, id: 'pu_' + Date.now(), status: 'Scheduled' });
+    persistDb();
   }
 }
 
@@ -277,6 +318,7 @@ async function addPartner(p) {
       body: JSON.stringify(p)
     });
     db.partners.push(partner);
+    persistDb();
   } catch (err) {
     db.partners.push({
       ...p,
@@ -285,6 +327,7 @@ async function addPartner(p) {
       color: 'green',
       status: 'Connected'
     });
+    persistDb();
   }
 }
 
