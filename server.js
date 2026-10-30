@@ -74,7 +74,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'ngo'], required: true },
+  role: { type: String, enum: ['admin', 'provider', 'ngo', 'volunteer'], required: true },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -329,7 +329,23 @@ async function seedDatabaseIfEmpty() {
     mealsGoalPct: 76
   });
 
-  console.log('✅ Demo data seeded across listings, requests, pickups, partners, waste, activity, metrics.');
+  const userCount = await User.countDocuments();
+  if (userCount === 0) {
+    const adminPass = await bcrypt.hash('admin123', 10);
+    const providerPass = await bcrypt.hash('provider123', 10);
+    const ngoPass = await bcrypt.hash('ngo123', 10);
+    const volunteerPass = await bcrypt.hash('volunteer123', 10);
+
+    await User.insertMany([
+      { name: 'Priya Varma', email: 'admin@foodloop.app', password: adminPass, role: 'admin' },
+      { name: 'Harbor House Bistro', email: 'provider@foodloop.app', password: providerPass, role: 'provider' },
+      { name: 'Hope Foundation', email: 'ngo@foodloop.app', password: ngoPass, role: 'ngo' },
+      { name: 'Alex Rivera', email: 'volunteer@foodloop.app', password: volunteerPass, role: 'volunteer' }
+    ]);
+    console.log('👤 Demo user accounts seeded: admin@foodloop.app, provider@foodloop.app, ngo@foodloop.app, volunteer@foodloop.app');
+  }
+
+  console.log('✅ Demo data seeded across users, listings, requests, pickups, partners, waste, activity, metrics.');
 }
 
 // ===================== Middleware =====================
@@ -414,8 +430,9 @@ app.post('/api/signin', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
+    const roleNames = { admin: 'an Admin', provider: 'a Food Provider', ngo: 'an NGO Partner', volunteer: 'a Volunteer' };
     if (user.role !== role) {
-      return res.status(403).json({ error: `This account is registered as ${user.role === 'admin' ? 'an Admin' : 'an NGO'}. Please switch roles.` });
+      return res.status(403).json({ error: `This account is registered as ${roleNames[user.role] || user.role}. Please select that role to sign in.` });
     }
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });

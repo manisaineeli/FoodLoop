@@ -7,51 +7,162 @@
     <title>FoodLoop · Surplus made useful</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <!-- Animated 3D Background Elements -->
+    <div class="bg-scene-3d" aria-hidden="true">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="grid-plane-3d"></div>
+    </div>
+
     <!-- Auth Screen -->
     <div class="auth-screen" id="authScreen">
-      <div class="auth-card">
-        <div class="auth-brand"><span class="brand-mark">✳</span><span>food<span>loop</span></span></div>
-        <div class="auth-tabs">
-          <button class="auth-tab active" data-tab="signin">Sign In</button>
-          <button class="auth-tab" data-tab="signup">Create Account</button>
+      <div class="auth-card card-3d" id="authCard">
+        <div class="auth-brand">
+          <span class="brand-mark mark-3d">✳</span>
+          <span class="brand-text">food<span>loop</span></span>
+          <span class="version-chip">3D v2.0</span>
+        </div>
+
+        <!-- Quick 1-Click Demo Profiles -->
+        <div class="demo-profiles-wrap">
+          <div class="demo-header">
+            <span>⚡ Instant 1-Click Demo Logins</span>
+            <small>Click any role to test</small>
+          </div>
+          <div class="demo-grid">
+            <button type="button" class="btn-3d demo-pill" data-demo="admin" title="Log in as Admin (Priya Varma)">
+              <span class="demo-icon">👑</span>
+              <strong>Admin</strong>
+              <small>Workspace</small>
+            </button>
+            <button type="button" class="btn-3d demo-pill" data-demo="provider" title="Log in as Food Provider (Harbor House)">
+              <span class="demo-icon">🍳</span>
+              <strong>Provider</strong>
+              <small>Donor</small>
+            </button>
+            <button type="button" class="btn-3d demo-pill" data-demo="ngo" title="Log in as NGO (Hope Foundation)">
+              <span class="demo-icon">🤝</span>
+              <strong>NGO</strong>
+              <small>Partner</small>
+            </button>
+            <button type="button" class="btn-3d demo-pill" data-demo="volunteer" title="Log in as Volunteer (Alex Rivera)">
+              <span class="demo-icon">🚚</span>
+              <strong>Volunteer</strong>
+              <small>Logistics</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-divider">
+          <span>or sign in with credentials</span>
+        </div>
+
+        <div class="auth-tabs tabs-3d">
+          <button class="auth-tab btn-tab-3d active" data-tab="signin">Sign In</button>
+          <button class="auth-tab btn-tab-3d" data-tab="signup">Create Account</button>
         </div>
 
         <!-- Sign In Form -->
         <form id="signinForm" class="auth-form">
-          <p class="auth-subtitle">Welcome back. Sign in to your account.</p>
-          <label>Email<input type="email" name="email" required placeholder="you@example.com" /></label>
-          <label>Password<input type="password" name="password" required placeholder="••••••••" /></label>
+          <p class="auth-subtitle">Welcome back! Sign in to access your redistribution hub.</p>
+          
+          <label>
+            <span>Email Address</span>
+            <div class="input-3d-wrap">
+              <span class="input-icon">✉</span>
+              <input type="email" name="email" id="signinEmail" required placeholder="you@example.com" autocomplete="email" />
+            </div>
+          </label>
+
+          <label>
+            <span>Password</span>
+            <div class="input-3d-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" name="password" id="signinPassword" required placeholder="••••••••" autocomplete="current-password" />
+              <button type="button" class="pwd-toggle" data-target="signinPassword" aria-label="Toggle password visibility">👁️</button>
+            </div>
+          </label>
+
           <div class="auth-role">
-            <span>I am a</span>
-            <div class="role-toggle">
-              <button type="button" class="role-btn active" data-role="admin">Admin</button>
-              <button type="button" class="role-btn" data-role="ngo">NGO</button>
+            <div class="auth-role-header">
+              <span>Select Your Role</span>
+              <span class="role-desc-badge" id="signinRoleDesc">Platform Administrator</span>
+            </div>
+            <div class="role-toggle role-toggle-3d">
+              <button type="button" class="role-btn btn-3d active" data-role="admin">👑 Admin</button>
+              <button type="button" class="role-btn btn-3d" data-role="provider">🍳 Provider</button>
+              <button type="button" class="role-btn btn-3d" data-role="ngo">🤝 NGO</button>
+              <button type="button" class="role-btn btn-3d" data-role="volunteer">🚚 Volunteer</button>
             </div>
           </div>
-          <button type="submit" class="primary-button auth-submit">Sign In <span>→</span></button>
+
+          <button type="submit" class="primary-button btn-3d auth-submit">
+            <span class="btn-shine"></span>
+            <span class="btn-text">Sign In</span>
+            <span class="btn-arrow">→</span>
+          </button>
         </form>
 
         <!-- Sign Up Form -->
         <form id="signupForm" class="auth-form hidden">
-          <p class="auth-subtitle">Join FoodLoop and start making an impact.</p>
-          <label>Full name<input type="text" name="name" required placeholder="Your name or organisation" /></label>
-          <label>Email<input type="email" name="email" required placeholder="you@example.com" /></label>
-          <label>Password<input type="password" name="password" required placeholder="Create a password" minlength="6" /></label>
+          <p class="auth-subtitle">Join FoodLoop and connect surplus food to those in need.</p>
+          
+          <label>
+            <span>Full Name or Organisation</span>
+            <div class="input-3d-wrap">
+              <span class="input-icon">👤</span>
+              <input type="text" name="name" id="signupName" required placeholder="e.g. Hope Kitchen or John Doe" />
+            </div>
+          </label>
+
+          <label>
+            <span>Email Address</span>
+            <div class="input-3d-wrap">
+              <span class="input-icon">✉</span>
+              <input type="email" name="email" id="signupEmail" required placeholder="you@example.com" autocomplete="email" />
+            </div>
+          </label>
+
+          <label>
+            <span>Create Password</span>
+            <div class="input-3d-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" name="password" id="signupPassword" required placeholder="Min 6 characters" minlength="6" autocomplete="new-password" />
+              <button type="button" class="pwd-toggle" data-target="signupPassword" aria-label="Toggle password visibility">👁️</button>
+            </div>
+            <div class="pwd-meter" id="pwdMeter"><i class="pwd-bar"></i><span class="pwd-text">Password strength</span></div>
+          </label>
+
           <div class="auth-role">
-            <span>I am a</span>
-            <div class="role-toggle">
-              <button type="button" class="role-btn active" data-role="admin">Admin</button>
-              <button type="button" class="role-btn" data-role="ngo">NGO</button>
+            <div class="auth-role-header">
+              <span>Register Account As</span>
+              <span class="role-desc-badge" id="signupRoleDesc">Platform Administrator</span>
+            </div>
+            <div class="role-toggle role-toggle-3d">
+              <button type="button" class="role-btn btn-3d active" data-role="admin">👑 Admin</button>
+              <button type="button" class="role-btn btn-3d" data-role="provider">🍳 Provider</button>
+              <button type="button" class="role-btn btn-3d" data-role="ngo">🤝 NGO</button>
+              <button type="button" class="role-btn btn-3d" data-role="volunteer">🚚 Volunteer</button>
             </div>
           </div>
-          <button type="submit" class="primary-button auth-submit">Create Account <span>→</span></button>
+
+          <button type="submit" class="primary-button btn-3d auth-submit">
+            <span class="btn-shine"></span>
+            <span class="btn-text">Create Account</span>
+            <span class="btn-arrow">→</span>
+          </button>
         </form>
 
         <p class="auth-error" id="authError"></p>
+        <div class="auth-status-chip" id="authStatusChip">
+          <span class="status-pulse-dot"></span>
+          <span id="authStatusText">System & Database Ready</span>
+        </div>
       </div>
     </div>
 
@@ -135,23 +246,61 @@
     <!-- NGO Dashboard (shown after NGO login) -->
     <div class="ngo-dashboard hidden" id="ngoDashboard">
       <header class="ngo-header">
-        <div class="ngo-brand"><span class="brand-mark">✳</span><span>food<span>loop</span></span></div>
+        <div class="ngo-brand">
+          <span class="brand-mark mark-3d">✳</span>
+          <span class="brand-text">food<span>loop</span></span>
+          <span class="role-badge ngo-badge">Community Partner Portal</span>
+        </div>
         <div class="ngo-user">
           <span class="avatar avatar-green" id="ngoAvatar">N</span>
-          <span><strong id="ngoName">NGO Name</strong><small>Community Partner</small></span>
-          <button class="text-button" id="ngoLogout">Log out</button>
+          <span><strong id="ngoName">NGO Name</strong><small id="ngoSubtitle">Community Partner</small></span>
+          <button class="btn-3d text-button" id="ngoLogout">↩ Log out</button>
         </div>
       </header>
       <main class="ngo-main">
         <div class="ngo-welcome">
-          <p class="eyebrow">FOOD AVAILABILITY</p>
+          <p class="eyebrow">FOOD AVAILABILITY · LIVE SURPLUS</p>
           <h1>Food near you</h1>
-          <p class="subtitle">Browse available surplus food from providers in your area.</p>
+          <p class="subtitle">Browse available surplus food from local restaurants, supermarkets &amp; providers. 1-click request to reserve.</p>
         </div>
         <div class="ngo-search-row">
-          <div class="search-box">⌕<input placeholder="Search available food..." id="ngoSearch" /></div>
+          <div class="search-box">⌕<input placeholder="Search available surplus food by name or category..." id="ngoSearch" /></div>
         </div>
         <div class="ngo-grid" id="ngoGrid"></div>
+      </main>
+    </div>
+
+    <!-- Volunteer Dashboard (shown after Volunteer login) -->
+    <div class="volunteer-dashboard hidden" id="volunteerDashboard">
+      <header class="volunteer-header">
+        <div class="volunteer-brand">
+          <span class="brand-mark mark-3d">✳</span>
+          <span class="brand-text">food<span>loop</span></span>
+          <span class="role-badge vol-badge">Logistics &amp; Courier Portal</span>
+        </div>
+        <div class="volunteer-user">
+          <span class="avatar avatar-orange" id="volAvatar">AR</span>
+          <span><strong id="volName">Alex Rivera</strong><small>Volunteer Courier</small></span>
+          <button class="btn-3d text-button" id="volLogout">↩ Log out</button>
+        </div>
+      </header>
+      <main class="volunteer-main">
+        <div class="volunteer-welcome">
+          <div class="vol-welcome-copy">
+            <p class="eyebrow">FIELD LOGISTICS · ZERO WASTE</p>
+            <h1>Volunteer Dispatch Board</h1>
+            <p class="subtitle">Collect surplus food packages from verified providers and deliver them directly to community partners.</p>
+          </div>
+          <div class="vol-stats-bar">
+            <div class="vol-stat-card card-3d"><span class="vol-stat-icon">🚚</span><div><strong>Active Runs</strong><span id="volActiveCount">3 Scheduled</span></div></div>
+            <div class="vol-stat-card card-3d"><span class="vol-stat-icon">✅</span><div><strong>Completed Today</strong><span id="volDoneCount">5 Delivered</span></div></div>
+            <div class="vol-stat-card card-3d"><span class="vol-stat-icon">🌱</span><div><strong>Impact</strong><span>180 kg rescued</span></div></div>
+          </div>
+        </div>
+        <div class="volunteer-filter-row">
+          <div class="search-box">⌕<input placeholder="Search routes, items or destination partners..." id="volSearch" /></div>
+        </div>
+        <div class="volunteer-grid" id="volGrid"></div>
       </main>
     </div>
 
